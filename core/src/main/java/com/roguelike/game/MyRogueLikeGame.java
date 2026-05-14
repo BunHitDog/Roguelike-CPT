@@ -97,7 +97,7 @@ public class MyRogueLikeGame extends ApplicationAdapter {
 
         boolean movingLeft;
 
-        int hp = 3;
+        int hp = 6; // default will be overridden for shooters
 
         float hitFlashTimer = 0f;
 
@@ -361,8 +361,7 @@ public class MyRogueLikeGame extends ApplicationAdapter {
 
         // KUNAI ROTATION
         float hoverRotation =
-                (float)Math.toDegrees(
-                        Math.atan2(aimY, aimX)) - 125f;
+            (float)Math.toDegrees(Math.atan2(aimY, aimX)) + 125f;
 
         // ======================================================
         // SHOOT
@@ -509,7 +508,7 @@ public class MyRogueLikeGame extends ApplicationAdapter {
                 e.shootTimer += delta;
 
                 // SHOOT EVERY 2.5 SECONDS
-                if (e.shootTimer >= 2.5f) {
+                if (e.shootTimer >= 1.25f) {
 
                     e.shootTimer = 0f;
 
@@ -876,11 +875,20 @@ public class MyRogueLikeGame extends ApplicationAdapter {
 
                 e.shooter = true;
 
-                // SMALL SHOOTER
                 e.size = 48f;
 
+                e.hp = 3; // shooter slimes
+
                 e.shootTimer =
-                        random.nextFloat() * 2.5f;
+                        random.nextFloat() * 1.25f;
+
+            } else {
+
+                e.shooter = false;
+
+                e.size = 96f; // regular slimes bigger
+
+                e.hp = 9; // 3x shooter HP
             }
 
             enemies.add(e);
