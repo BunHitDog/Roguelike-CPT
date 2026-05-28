@@ -201,9 +201,6 @@ public class MyRogueLikeGame extends ApplicationAdapter {
         iceBallTexture = new Texture("Ice Ball.png");
         lightningBallTexture = new Texture("Lightning Ball.png");
 
-        // BACKGROUND
-        background = new Texture("dungeon.png");
-
         // NUMBERS
         numbers[0] = new Texture("NumZero.png");
         numbers[1] = new Texture("NumOne.png");
@@ -217,15 +214,8 @@ public class MyRogueLikeGame extends ApplicationAdapter {
         numbers[9] = new Texture("NumNine.png");
 
         // TILEMAP
-        // TILEMAP
-        try {
-            map = new TmxMapLoader().load("maps/cpt_map.tmx");
-            renderer = new OrthogonalTiledMapRenderer(map, 1f);
-            System.out.println("✅ Successfully loaded cpt_map.tmx");
-        } catch (Exception e) {
-            System.err.println("❌ Failed to load map: " + e.getMessage());
-            e.printStackTrace();
-        }
+        map = new TmxMapLoader().load("maps/cpt_map.tmx");
+        renderer = new OrthogonalTiledMapRenderer(map, 1f);
 
         camera = new OrthographicCamera();
         camera.setToOrtho(false, 1280, 720);
