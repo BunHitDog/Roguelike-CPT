@@ -13,9 +13,15 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
+import com.badlogic.gdx.maps.tiled.TiledMap;
+import com.badlogic.gdx.maps.tiled.TmxMapLoader;
+import com.badlogic.gdx.maps.tiled.renderers.OrthogonalTiledMapRenderer;
 import com.badlogic.gdx.math.Vector3;
 
 public class MyRogueLikeGame extends ApplicationAdapter {
+
+    private TiledMap map;
+    private OrthogonalTiledMapRenderer renderer;
 
     private SpriteBatch batch;
     private ShapeRenderer shapeRenderer;
@@ -209,6 +215,17 @@ public class MyRogueLikeGame extends ApplicationAdapter {
         numbers[7] = new Texture("NumSeven.png");
         numbers[8] = new Texture("NumEight.png");
         numbers[9] = new Texture("NumNine.png");
+
+        // TILEMAP
+        // TILEMAP
+        try {
+            map = new TmxMapLoader().load("maps/cpt_map.tmx");
+            renderer = new OrthogonalTiledMapRenderer(map, 1f);
+            System.out.println("✅ Successfully loaded cpt_map.tmx");
+        } catch (Exception e) {
+            System.err.println("❌ Failed to load map: " + e.getMessage());
+            e.printStackTrace();
+        }
 
         camera = new OrthographicCamera();
         camera.setToOrtho(false, 1280, 720);
@@ -630,6 +647,12 @@ public class MyRogueLikeGame extends ApplicationAdapter {
 
         camera.update();
 
+        float cameraHalfWidth = camera.viewportWidth * camera.zoom * 0.5f;
+        float cameraHalfHeight = camera.viewportHeight * camera.zoom * 0.5f;
+
+        camera.position.x = Math.max(cameraHalfWidth, Math.min(camera.position.x, WORLD_SIZE - cameraHalfWidth));
+        camera.position.y = Math.max(cameraHalfHeight, Math.min(camera.position.y, WORLD_SIZE - cameraHalfHeight));
+
         // ======================================================
         // NEXT WAVE
         // ======================================================
@@ -647,16 +670,11 @@ public class MyRogueLikeGame extends ApplicationAdapter {
 
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
+        renderer.setView(camera);
+        renderer.render();
+
         batch.setProjectionMatrix(camera.combined);
-
         batch.begin();
-
-        batch.draw(
-                background,
-                0,
-                0,
-                WORLD_SIZE,
-                WORLD_SIZE);
 
         // PLAYER
         if (playerHitFlashTimer > 0 || burnTimer > 0) {
@@ -767,6 +785,7 @@ public class MyRogueLikeGame extends ApplicationAdapter {
         drawNumberForward(enemies.size(), 1180, 680);
 
         batch.end();
+
     }
 
     // ======================================================
@@ -916,10 +935,11 @@ public class MyRogueLikeGame extends ApplicationAdapter {
         iceBallTexture.dispose();
         lightningBallTexture.dispose();
 
-        background.dispose();
-
         for (Texture t : numbers) {
             t.dispose();
         }
+
+        if (map != null) map.dispose();
+        if (renderer != null) renderer.dispose();
     }
 }
