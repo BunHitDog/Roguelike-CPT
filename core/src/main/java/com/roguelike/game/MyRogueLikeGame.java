@@ -129,6 +129,15 @@ public class MyRogueLikeGame extends ApplicationAdapter {
     // ======================================================
     // WORLD / CAMERA
     // ======================================================
+    private float worldWidth;
+    private float worldHeight;
+
+    private float playableMaxX;
+    private float playableMaxY;
+    private float playableMinX;
+    private float playableMinY;
+
+
     private static final float WORLD_SIZE = 2048f;
 
     private static final float PLAYER_SIZE = 48f;
@@ -230,9 +239,27 @@ public class MyRogueLikeGame extends ApplicationAdapter {
 
         random = new Random();
 
-        playerX = WORLD_SIZE / 2f;
-        playerY = WORLD_SIZE / 2f;
+        // Get actual map size from TiledMap
+        worldWidth = map.getProperties().get("width", Integer.class) * 
+                    map.getProperties().get("tilewidth", Integer.class);
 
+        worldHeight = map.getProperties().get("height", Integer.class) * 
+                    map.getProperties().get("tileheight", Integer.class);
+
+        // === IMPROVED PLAYABLE AREA ===
+        float border = 70f;                    // ← Change this number to adjust border thickness
+        playableMinX = border;
+        playableMinY = border;
+        playableMaxX = worldWidth - border;
+        playableMaxY = worldHeight - border;
+
+        System.out.println("Map size loaded: " + worldWidth + " x " + worldHeight);
+        System.out.println("Playable border set to: " + border + " pixels");
+
+        // Spawn player in the center of the actual map
+        playerX = (playableMinX + playableMaxX) / 2f - PLAYER_SIZE / 2f;
+        playerY = (playableMinY + playableMaxY) / 2f - PLAYER_SIZE / 2f;
+as
         spawnWave();
     }
 
@@ -328,6 +355,10 @@ public class MyRogueLikeGame extends ApplicationAdapter {
 
         playerX += moveX * currentSpeed * delta;
         playerY += moveY * currentSpeed * delta;
+
+        // === KEEP PLAYER WITHIN MAP BOUNDS ===
+        playerX = Math.max(playableMinX, Math.min(playerX, playableMaxX - PLAYER_SIZE));
+        playerY = Math.max(playableMinY, Math.min(playerY, playableMaxY - PLAYER_SIZE));
 
         // ======================================================
         // MOUSE POSITION
@@ -640,8 +671,8 @@ public class MyRogueLikeGame extends ApplicationAdapter {
         float cameraHalfWidth = camera.viewportWidth * camera.zoom * 0.5f;
         float cameraHalfHeight = camera.viewportHeight * camera.zoom * 0.5f;
 
-        camera.position.x = Math.max(cameraHalfWidth, Math.min(camera.position.x, WORLD_SIZE - cameraHalfWidth));
-        camera.position.y = Math.max(cameraHalfHeight, Math.min(camera.position.y, WORLD_SIZE - cameraHalfHeight));
+        camera.position.x = Math.max(cameraHalfWidth, Math.min(camera.position.x, worldWidth - cameraHalfWidth));
+        camera.position.y = Math.max(cameraHalfHeight, Math.min(camera.position.y, worldHeight - cameraHalfHeight));
 
         // ======================================================
         // NEXT WAVE
@@ -877,8 +908,8 @@ public class MyRogueLikeGame extends ApplicationAdapter {
 
             Enemy e = new Enemy();
 
-            e.x = random.nextFloat() * WORLD_SIZE;
-            e.y = random.nextFloat() * WORLD_SIZE;
+            e.x = playableMinX + random.nextFloat() * (playableMaxX - playableMinX - e.size);
+            e.y = playableMinY + random.nextFloat() * (playableMaxY - playableMinY - e.size);;
 
             if (i < shooterCount) {
 
