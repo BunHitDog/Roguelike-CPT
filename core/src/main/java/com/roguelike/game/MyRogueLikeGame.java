@@ -259,7 +259,6 @@ public class MyRogueLikeGame extends ApplicationAdapter {
         // Spawn player in the center of the actual map
         playerX = (playableMinX + playableMaxX) / 2f - PLAYER_SIZE / 2f;
         playerY = (playableMinY + playableMaxY) / 2f - PLAYER_SIZE / 2f;
-as
         spawnWave();
     }
 
