@@ -125,6 +125,9 @@ public class MyRogueLikeGame extends ApplicationAdapter {
     // NUMBERS
     // ======================================================
     private Texture[] numbers = new Texture[10];
+    private Texture xpTexture;
+    private Texture bigXpTexture;
+    private ArrayList<XpOrb> xpOrbs;
 
     // ======================================================
     // WORLD / CAMERA
@@ -209,6 +212,8 @@ public class MyRogueLikeGame extends ApplicationAdapter {
         fireBallTexture = new Texture("Fire Ball.png");
         iceBallTexture = new Texture("Ice Ball.png");
         lightningBallTexture = new Texture("Lightning Ball.png");
+        xpTexture = new Texture("Xp.png");
+        bigXpTexture = new Texture("BigXp.png");
 
         // NUMBERS
         numbers[0] = new Texture("NumZero.png");
@@ -236,6 +241,7 @@ public class MyRogueLikeGame extends ApplicationAdapter {
         enemies = new ArrayList<>();
         kunais = new ArrayList<>();
         enemyProjectiles = new ArrayList<>();
+        xpOrbs = new ArrayList<>();
 
         random = new Random();
 
@@ -457,9 +463,44 @@ public class MyRogueLikeGame extends ApplicationAdapter {
                     removeKunai = true;
 
                     if (e.hp <= 0) {
+
+                        // SMALL XP (25% chance each, 0–3 total)
+                        for (int i = 0; i < 3; i++) {
+
+                            if (random.nextFloat() < 0.25f) {
+
+                                float angle = random.nextFloat() * 360f;
+
+                                float dx = (float)Math.cos(Math.toRadians(angle));
+                                float dy = (float)Math.sin(Math.toRadians(angle));
+
+                                xpOrbs.add(new XpOrb(
+                                        e.x + e.size / 2f,
+                                        e.y + e.size / 2f,
+                                        dx,
+                                        dy,
+                                        false));
+                            }
+                        }
+
+                        // BIG XP (10% chance, max 1)
+                        if (random.nextFloat() < 0.10f) {
+
+                            float angle = random.nextFloat() * 360f;
+
+                            float dx = (float)Math.cos(Math.toRadians(angle));
+                            float dy = (float)Math.sin(Math.toRadians(angle));
+
+                            xpOrbs.add(new XpOrb(
+                                    e.x + e.size / 2f,
+                                    e.y + e.size / 2f,
+                                    dx,
+                                    dy,
+                                    true));
+                        }
+
                         enemyIterator.remove();
                     }
-
                     break;
                 }
             }
@@ -512,6 +553,15 @@ public class MyRogueLikeGame extends ApplicationAdapter {
 
                 projectileIterator.remove();
             }
+        }
+
+        Iterator<XpOrb> xpIterator = xpOrbs.iterator();
+
+        while (xpIterator.hasNext()) {
+
+            XpOrb orb = xpIterator.next();
+
+            orb.update(delta);
         }
 
         // ======================================================
@@ -782,6 +832,17 @@ public class MyRogueLikeGame extends ApplicationAdapter {
             );
         }
 
+        for (XpOrb orb : xpOrbs) {
+
+            batch.draw(
+                orb.big ? bigXpTexture : xpTexture,
+                orb.x,
+                orb.y,
+                orb.size,
+                orb.size
+            );
+        }
+
         batch.end();
 
         // ======================================================
@@ -938,6 +999,7 @@ public class MyRogueLikeGame extends ApplicationAdapter {
     public void dispose() {
 
         batch.dispose();
+        bigXpTexture.dispose();
 
         shapeRenderer.dispose();
 
@@ -954,6 +1016,8 @@ public class MyRogueLikeGame extends ApplicationAdapter {
         fireBallTexture.dispose();
         iceBallTexture.dispose();
         lightningBallTexture.dispose();
+
+        xpTexture.dispose();
 
         for (Texture t : numbers) {
             t.dispose();
