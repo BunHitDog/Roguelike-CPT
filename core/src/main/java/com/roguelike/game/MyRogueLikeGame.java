@@ -52,17 +52,6 @@ public class MyRogueLikeGame extends ApplicationAdapter {
     private float shootCooldown = 0f;
     private final float SHOOT_DELAY = 0.25f;
 
-    private class Kunai {
-
-        float x, y;
-        float dx, dy;
-
-        float rotation;
-
-        float speed = 600f;
-        float size = 26f;
-    }
-
     private ArrayList<Kunai> kunais;
 
     // ======================================================
@@ -72,46 +61,12 @@ public class MyRogueLikeGame extends ApplicationAdapter {
     private Texture iceBallTexture;
     private Texture lightningBallTexture;
 
-    private class EnemyProjectile {
-
-        float x, y;
-        float dx, dy;
-
-        float speed = 260f;
-        float size = 28f;
-
-        String type;
-
-        Texture texture;
-    }
-
     private ArrayList<EnemyProjectile> enemyProjectiles;
 
     // ======================================================
     // ENEMY
     // ======================================================
     private Texture slimeLeft, slimeRight;
-
-    private class Enemy {
-
-        float x, y;
-
-        // BIG NORMAL SLIMES
-        float size = 96f;
-
-        float speed = 80f;
-
-        boolean movingLeft;
-
-        int hp = 6; // default will be overridden for shooters
-
-        float hitFlashTimer = 0f;
-
-        // SHOOTER SLIME
-        boolean shooter = false;
-
-        float shootTimer = 0f;
-    }
 
     private ArrayList<Enemy> enemies;
     private Random random;
@@ -127,6 +82,7 @@ public class MyRogueLikeGame extends ApplicationAdapter {
     private Texture[] numbers = new Texture[10];
     private Texture xpTexture;
     private Texture bigXpTexture;
+    private Texture statMenu;
     private ArrayList<XpOrb> xpOrbs;
 
     // ======================================================
@@ -213,7 +169,10 @@ public class MyRogueLikeGame extends ApplicationAdapter {
         iceBallTexture = new Texture("Ice Ball.png");
         lightningBallTexture = new Texture("Lightning Ball.png");
         xpTexture = new Texture("Xp.png");
+        
+        // MENU
         bigXpTexture = new Texture("BigXp.png");
+        statMenu = new Texture("StatMenu.png");
 
         // NUMBERS
         numbers[0] = new Texture("NumZero.png");
@@ -431,42 +390,36 @@ public class MyRogueLikeGame extends ApplicationAdapter {
         // ======================================================
         // UPDATE KUNAIS
         // ======================================================
-        Iterator<Kunai> kunaiIterator = kunais.iterator();
+       Iterator<Kunai> kunaiIterator = kunais.iterator();
 
         while (kunaiIterator.hasNext()) {
 
             Kunai k = kunaiIterator.next();
 
-            k.x += k.dx * k.speed * delta;
-            k.y += k.dy * k.speed * delta;
+            k.update(delta);
 
-            boolean removeKunai = false;
+            boolean hit = false;
 
-            Iterator<Enemy> enemyIterator =
-                    enemies.iterator();
+            Iterator<Enemy> enemyIterator = enemies.iterator();
 
             while (enemyIterator.hasNext()) {
 
                 Enemy e = enemyIterator.next();
 
-                if (isColliding(
-                        k.x,
-                        k.y,
-                        e.x,
-                        e.y,
-                        e.size / 2f)) {
+                if (CollisionUtils.isColliding(
+        k.x, k.y,
+        e.x, e.y,
+        e.size / 2f)) {
 
                     e.hp--;
-
                     e.hitFlashTimer = 0.15f;
 
-                    removeKunai = true;
+                    hit = true;
 
                     if (e.hp <= 0) {
 
-                        // SMALL XP (25% chance each, 0–3 total)
+                        // XP DROP (KEEP YOUR EXISTING CODE HERE EXACTLY)
                         for (int i = 0; i < 3; i++) {
-
                             if (random.nextFloat() < 0.25f) {
 
                                 float angle = random.nextFloat() * 360f;
@@ -483,7 +436,6 @@ public class MyRogueLikeGame extends ApplicationAdapter {
                             }
                         }
 
-                        // BIG XP (10% chance, max 1)
                         if (random.nextFloat() < 0.10f) {
 
                             float angle = random.nextFloat() * 360f;
@@ -501,13 +453,12 @@ public class MyRogueLikeGame extends ApplicationAdapter {
 
                         enemyIterator.remove();
                     }
+
                     break;
                 }
             }
 
-            if (removeKunai) {
-                kunaiIterator.remove();
-            }
+            if (hit) kunaiIterator.remove();
         }
 
         // ======================================================
@@ -524,12 +475,10 @@ public class MyRogueLikeGame extends ApplicationAdapter {
             p.x += p.dx * p.speed * delta;
             p.y += p.dy * p.speed * delta;
 
-            if (isColliding(
-                    p.x,
-                    p.y,
-                    playerX,
-                    playerY,
-                    PLAYER_SIZE)) {
+            if (CollisionUtils.isColliding(
+        p.x, p.y,
+        playerX, playerY,
+        PLAYER_SIZE)) { 
 
                 currentHealth -= 1;
 
@@ -571,85 +520,16 @@ public class MyRogueLikeGame extends ApplicationAdapter {
 
         for (Enemy e : enemies) {
 
-            if (e.hitFlashTimer > 0) {
-                e.hitFlashTimer -= delta;
-            }
+            e.update(delta, playerX, playerY, enemyProjectiles, fireBallTexture, iceBallTexture, lightningBallTexture, random);
 
-            float dx = playerX - e.x;
-            float dy = playerY - e.y;
-
-            float dist =
-                    (float)Math.sqrt(dx * dx + dy * dy);
-
-            if (dist > 0.001f) {
-
-                e.x += (dx / dist) * e.speed * delta;
-                e.y += (dy / dist) * e.speed * delta;
-            }
-
-            e.movingLeft = dx < 0;
-
-            // SHOOTER SLIMES
-            if (e.shooter) {
-
-                e.shootTimer += delta;
-
-                // SHOOT EVERY 2.5 SECONDS
-                if (e.shootTimer >= 1.25f) {
-
-                    e.shootTimer = 0f;
-
-                    EnemyProjectile p =
-                            new EnemyProjectile();
-
-                    p.x = e.x + e.size / 2f;
-                    p.y = e.y + e.size / 2f;
-
-                    float pdx = playerX - e.x;
-                    float pdy = playerY - e.y;
-
-                    float plen =
-                            (float)Math.sqrt(
-                                    pdx * pdx + pdy * pdy);
-
-                    p.dx = pdx / plen;
-                    p.dy = pdy / plen;
-
-                    int rand = random.nextInt(3);
-
-                    if (rand == 0) {
-
-                        p.type = "fire";
-                        p.texture = fireBallTexture;
-                    }
-
-                    else if (rand == 1) {
-
-                        p.type = "ice";
-                        p.texture = iceBallTexture;
-                    }
-
-                    else {
-
-                        p.type = "lightning";
-                        p.texture = lightningBallTexture;
-                    }
-
-                    enemyProjectiles.add(p);
-                }
-            }
-
-            if (isColliding(
-                    playerX,
-                    playerY,
-                    e.x,
-                    e.y,
-                    PLAYER_SIZE)) {
+            if (CollisionUtils.isColliding(
+        e.x, e.y,
+        playerX, playerY,
+        e.size / 2f)) {
 
                 touching++;
 
                 triggerShake();
-
                 playerHitFlashTimer = 0.1f;
             }
         }
@@ -736,7 +616,7 @@ public class MyRogueLikeGame extends ApplicationAdapter {
         // ======================================================
         // RENDER
         // ======================================================
-        Gdx.gl.glClearColor(0, 0, 0, 1);
+        Gdx.gl.glClearColor(0.92f, 0.92f, 0.92f, 1);
 
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
@@ -852,6 +732,14 @@ public class MyRogueLikeGame extends ApplicationAdapter {
 
         batch.begin();
 
+        batch.draw(
+                statMenu,
+                10,
+                10,
+                100, 
+                150
+        );
+
         drawNumber(currentHealth, 20, 680);
 
         int timeInt = (int)survivalTime;
@@ -936,22 +824,6 @@ public class MyRogueLikeGame extends ApplicationAdapter {
                     32
             );
         }
-    }
-
-    // ======================================================
-    // COLLISION
-    // ======================================================
-    private boolean isColliding(
-            float x1,
-            float y1,
-            float x2,
-            float y2,
-            float size) {
-
-        float dx = x1 - x2;
-        float dy = y1 - y2;
-
-        return Math.sqrt(dx * dx + dy * dy) < size;
     }
 
     // ======================================================

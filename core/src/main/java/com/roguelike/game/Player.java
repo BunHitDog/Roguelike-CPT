@@ -57,7 +57,6 @@ public class Player {
 
         shootCooldown -= delta;
 
-        // ❗ STUN BLOCKS EVERYTHING
         if (stunTimer > 0) return;
 
         float moveX = 0;
@@ -104,12 +103,14 @@ public class Player {
 
         shootCooldown = 0.25f;
 
-        return new Kunai(x + SIZE / 2, y + SIZE / 2, mx, my);
+        return new Kunai(
+            x + SIZE / 2,
+            y + SIZE / 2,
+            mx,
+            my
+        );
     }
 
-    // =========================
-    // APPLY DAMAGE + EFFECTS
-    // =========================
     public void hit(String type) {
 
         currentHealth -= 1;
@@ -118,13 +119,9 @@ public class Player {
         if (type.equals("fire")) {
             burnTimer = 20f;
             burnTickTimer = 0f;
-        }
-
-        else if (type.equals("ice")) {
+        } else if (type.equals("ice")) {
             slowTimer = 2f;
-        }
-
-        else if (type.equals("lightning")) {
+        } else if (type.equals("lightning")) {
             stunTimer = 1f;
         }
     }
