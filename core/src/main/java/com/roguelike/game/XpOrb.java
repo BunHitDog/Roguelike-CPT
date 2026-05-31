@@ -3,6 +3,7 @@ package com.roguelike.game;
 public class XpOrb {
 
     public float x, y;
+
     public float dx, dy;
 
     public float size;
@@ -34,7 +35,6 @@ public class XpOrb {
         x += dx * speed * delta;
         y += dy * speed * delta;
 
-        // friction slowdown
         speed *= 0.96f;
     }
 }

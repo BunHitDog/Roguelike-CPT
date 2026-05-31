@@ -83,6 +83,9 @@ public class MyRogueLikeGame extends ApplicationAdapter {
     private Texture xpTexture;
     private Texture bigXpTexture;
     private Texture statMenu;
+    private Texture hpBar;
+    private Texture xpBar;
+    private Texture slash;
     private ArrayList<XpOrb> xpOrbs;
 
     // ======================================================
@@ -154,6 +157,7 @@ public class MyRogueLikeGame extends ApplicationAdapter {
     private float pauseCenterY = 360;
     private int pauseSelection = 0;
     private float pauseAnim = 0f;
+    private Texture pauseMenu;
 
     // ======================================================
     // LEVELING SYSTEM
@@ -194,6 +198,10 @@ public class MyRogueLikeGame extends ApplicationAdapter {
         statMenu = new Texture("StatMenu.png");
         startButton = new Texture("Start.png");
         exitButton = new Texture("Exit.png");
+        hpBar = new Texture("Hp.png");
+        xpBar = new Texture("Experience.png");
+        slash = new Texture("Slash.png");
+        pauseMenu = new Texture("PauseMenu.png");
 
         // NUMBERS
         numbers[0] = new Texture("NumZero.png");
@@ -222,6 +230,7 @@ public class MyRogueLikeGame extends ApplicationAdapter {
         kunais = new ArrayList<>();
         enemyProjectiles = new ArrayList<>();
         xpOrbs = new ArrayList<>();
+        
 
         random = new Random();
 
@@ -258,6 +267,11 @@ public class MyRogueLikeGame extends ApplicationAdapter {
         // ======================================================
         if (Gdx.input.isKeyJustPressed(Input.Keys.P)) {
             paused = !paused;
+
+            // RESET MENU STATE WHEN OPENING PAUSE
+            if (paused) {
+                pauseSelection = 0;
+            }
         }
 
         // ======================================================
@@ -290,9 +304,9 @@ public class MyRogueLikeGame extends ApplicationAdapter {
             }
 
             // ======================================================
-            // HARD WIPE BACKGROUND (FIXES JITTER COMPLETELY)
+            // CLEAR SCREEN (NO WHITE FLASH)
             // ======================================================
-            Gdx.gl.glClearColor(1f, 1f, 1f, 1f); // PURE WHITE SCREEN
+            Gdx.gl.glClearColor(0f, 0f, 0f, 1f);
             Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
             // ======================================================
@@ -301,34 +315,40 @@ public class MyRogueLikeGame extends ApplicationAdapter {
             batch.setProjectionMatrix(uiCamera.combined);
             batch.begin();
 
+            batch.setColor(Color.WHITE);
+            batch.draw(pauseMenu, 0, 0, 1280, 720);
+
             float centerX = 640 - 100;
             float centerY = 360;
 
-            // =========================
-            // SIMPLE VISUAL STATE
-            // =========================
-
-            // START (CONTINUE)
+            // ======================================================
+            // START BUTTON (always visible)
+            // ======================================================
             if (pauseSelection == 0) {
-                batch.setColor(0.1f, 0.1f, 0.1f, 1f); // VERY DARK
+                batch.setColor(1f, 1f, 1f, 1f);      // bright (selected)
             } else {
-                batch.setColor(0.8f, 0.8f, 0.8f, 1f); // LIGHT
+                batch.setColor(0.5f, 0.5f, 0.5f, 1f); // dim (not selected)
             }
             batch.draw(startButton, centerX, centerY + 60, 200, 60);
 
-            // EXIT
+            // ======================================================
+            // EXIT BUTTON (always visible)
+            // ======================================================
             if (pauseSelection == 1) {
-                batch.setColor(0.1f, 0.1f, 0.1f, 1f);
+                batch.setColor(1f, 1f, 1f, 1f);
             } else {
-                batch.setColor(0.8f, 0.8f, 0.8f, 1f);
+                batch.setColor(0.5f, 0.5f, 0.5f, 1f);
             }
             batch.draw(exitButton, centerX, centerY - 60, 200, 60);
+
+            // reset color
+            batch.setColor(Color.WHITE);
 
             batch.setColor(Color.WHITE);
 
             batch.end();
 
-            return; // FULL FREEZE
+            return;
         }
 
         // ======================================================
@@ -858,49 +878,68 @@ public class MyRogueLikeGame extends ApplicationAdapter {
         batch.end();
 
         // ======================================================
-        // UI
+        // UI (STAT MENU + HP + XP OVERLAY)
         // ======================================================
         batch.setProjectionMatrix(uiCamera.combined);
-
         batch.begin();
 
-        batch.draw(
-                statMenu,
-                10,
-                10,
-                100, 
-                150
-        );
+        // ======================================================
+        // STAT MENU BACKGROUND (KEEP THIS)
+        // ======================================================
+        batch.draw(statMenu, 10, 10, 220, 220);
 
-        // LEVEL TEXT (top of stat menu)
-        drawNumberForward(level, 20, 225);
+        // ======================================================
+        // UI BASE POSITION (anchored to stat menu)
+        // ======================================================
+        float baseX = 30;
+        float baseY = 30;
 
-        // XP DISPLAY (below level)
-        drawNumberForward(xp, 20, 175);
+        // ======================================================
+        // LEVEL (top of menu)
+        // ======================================================
+        drawNumberForward(level, (int)(baseX), (int)(baseY + 170), 0.6f);
 
-        // slash separator (simple visual spacing hack)
-        batch.draw(numbers[0], 70, 175, 32, 32); // temporary "0" as placeholder for "/"
+        // ======================================================
+        // HP BAR (inside stat menu)
+        // ======================================================
+        batch.draw(hpBar, baseX + 230, baseY + 50, 180, 40);
 
-        // correct forward number
-        drawNumberForward(xpToNextLevel, 110, 175);
+        // HP number on bar (SMALLER)
+        // ======================================================
+        drawNumberForward(currentHealth,
+                (int)(baseX + 320),
+                (int)(baseY + 60),
+                0.6f);
 
-        drawNumber(currentHealth, 20, 680);
+        // ======================================================
+        // XP BAR (inside stat menu, below HP)
+        // ======================================================
+        batch.draw(xpBar, baseX + 230, baseY, 180, 40);
 
-        int timeInt = (int)survivalTime;
+        // XP text: xp / xpToNextLevel (SMALLER)
+        // ======================================================
+        drawNumberForward(xp,
+                (int)(baseX + 300),
+                (int)(baseY + 10),
+                0.6f);
 
-        String s = String.valueOf(timeInt);
+        // slash in middle
+        batch.draw(slash, baseX + 330, baseY + 8, 24, 24);
 
-        int centerX =
-                (1280 / 2) - (s.length() * 17);
+        // max XP (SMALLER)
+        // ======================================================
+        drawNumberForward(xpToNextLevel,
+                (int)(baseX + 360),
+                (int)(baseY + 10),
+                0.6f);
 
-        drawNumberForward(timeInt, centerX, 680);
-
-        drawNumberForward(enemies.size(), 1180, 680);
+        // ======================================================
+        // OPTIONAL: small enemy count or time (keep if you want)
+        // ======================================================
+        drawNumberForward(enemies.size(), 1180, 680, 0.6f);
 
         batch.end();
-
     }
-
     // ======================================================
     // SHAKE
     // ======================================================
@@ -911,61 +950,28 @@ public class MyRogueLikeGame extends ApplicationAdapter {
         shakeIntensity = 4f;
     }
 
-    // ======================================================
-    // NUMBER DRAW
-    // ======================================================
-    private void drawNumber(int value, int x, int y) {
+    private void drawNumberForward(int value, int x, int y) {
 
-        if (value == 0) {
-
-            batch.draw(numbers[0], x, y, 32, 32);
-
-            return;
-        }
-
-        int offset = 0;
-
-        int temp = value;
-
-        while (temp > 0) {
-
-            int digit = temp % 10;
-
-            batch.draw(
-                    numbers[digit],
-                    x + offset,
-                    y,
-                    32,
-                    32);
-
-            offset += 34;
-
-            temp /= 10;
-        }
+        drawNumberForward(value, x, y, 1f);
     }
 
-    // ======================================================
-    // TIMER FIX
-    // ======================================================
-    private void drawNumberForward(
-            int value,
-            int x,
-            int y) {
+    private void drawNumberForward(int value, int x, int y, float scale) {
 
         String s = String.valueOf(value);
 
+        float size = 32f * scale;
+        float spacing = 34f * scale;
+
         for (int i = 0; i < s.length(); i++) {
 
-            int digit =
-                    Character.getNumericValue(
-                            s.charAt(i));
+            int digit = Character.getNumericValue(s.charAt(i));
 
             batch.draw(
                     numbers[digit],
-                    x + (i * 34),
+                    x + (i * spacing),
                     y,
-                    32,
-                    32
+                    size,
+                    size
             );
         }
     }
