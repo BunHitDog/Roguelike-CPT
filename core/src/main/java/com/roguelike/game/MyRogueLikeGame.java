@@ -143,6 +143,25 @@ public class MyRogueLikeGame extends ApplicationAdapter {
     // ======================================================
     private boolean debugHitboxes = true;
 
+    // ======================================================
+    // PAUSE MENU
+    // ======================================================
+    private boolean paused = false;
+
+    private Texture startButton;
+    private Texture exitButton;
+    private float pauseCenterX = 640;
+    private float pauseCenterY = 360;
+    private int pauseSelection = 0;
+    private float pauseAnim = 0f;
+
+    // ======================================================
+    // LEVELING SYSTEM
+    // ======================================================
+    private int level = 1;
+    private int xp = 0;
+    private int xpToNextLevel = 20;
+
     @Override
     public void create() {
 
@@ -173,6 +192,8 @@ public class MyRogueLikeGame extends ApplicationAdapter {
         // MENU
         bigXpTexture = new Texture("BigXp.png");
         statMenu = new Texture("StatMenu.png");
+        startButton = new Texture("Start.png");
+        exitButton = new Texture("Exit.png");
 
         // NUMBERS
         numbers[0] = new Texture("NumZero.png");
@@ -232,6 +253,87 @@ public class MyRogueLikeGame extends ApplicationAdapter {
 
         float delta = Gdx.graphics.getDeltaTime();
 
+        // ======================================================
+        // PAUSE TOGGLE
+        // ======================================================
+        if (Gdx.input.isKeyJustPressed(Input.Keys.P)) {
+            paused = !paused;
+        }
+
+        // ======================================================
+        // PAUSED GAME LOGIC (FREEZE EVERYTHING)
+        // ======================================================
+        if (paused) {
+
+            // navigation
+            if (Gdx.input.isKeyJustPressed(Input.Keys.UP) ||
+                Gdx.input.isKeyJustPressed(Input.Keys.W)) {
+                pauseSelection = 0;
+            }
+
+            if (Gdx.input.isKeyJustPressed(Input.Keys.DOWN) ||
+                Gdx.input.isKeyJustPressed(Input.Keys.S)) {
+                pauseSelection = 1;
+            }
+
+            // select option
+            if (Gdx.input.isKeyJustPressed(Input.Keys.ENTER) ||
+                Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
+
+                if (pauseSelection == 0) {
+                    paused = false;
+                }
+
+                if (pauseSelection == 1) {
+                    Gdx.app.exit();
+                }
+            }
+
+            // ======================================================
+            // HARD WIPE BACKGROUND (FIXES JITTER COMPLETELY)
+            // ======================================================
+            Gdx.gl.glClearColor(1f, 1f, 1f, 1f); // PURE WHITE SCREEN
+            Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+
+            // ======================================================
+            // DRAW PAUSE MENU ONLY
+            // ======================================================
+            batch.setProjectionMatrix(uiCamera.combined);
+            batch.begin();
+
+            float centerX = 640 - 100;
+            float centerY = 360;
+
+            // =========================
+            // SIMPLE VISUAL STATE
+            // =========================
+
+            // START (CONTINUE)
+            if (pauseSelection == 0) {
+                batch.setColor(0.1f, 0.1f, 0.1f, 1f); // VERY DARK
+            } else {
+                batch.setColor(0.8f, 0.8f, 0.8f, 1f); // LIGHT
+            }
+            batch.draw(startButton, centerX, centerY + 60, 200, 60);
+
+            // EXIT
+            if (pauseSelection == 1) {
+                batch.setColor(0.1f, 0.1f, 0.1f, 1f);
+            } else {
+                batch.setColor(0.8f, 0.8f, 0.8f, 1f);
+            }
+            batch.draw(exitButton, centerX, centerY - 60, 200, 60);
+
+            batch.setColor(Color.WHITE);
+
+            batch.end();
+
+            return; // FULL FREEZE
+        }
+
+        // ======================================================
+        // GAME RUNNING (NORMAL MODE)
+        // ======================================================
         survivalTime += delta;
 
         shootCooldown -= delta;
@@ -511,6 +613,36 @@ public class MyRogueLikeGame extends ApplicationAdapter {
             XpOrb orb = xpIterator.next();
 
             orb.update(delta);
+
+            float dx = orb.x - playerX;
+            float dy = orb.y - playerY;
+
+            float distSq = dx * dx + dy * dy;
+
+            // pickup radius
+            if (distSq < 900f) { // ~30px radius
+
+                // XP VALUES
+                int gainedXP = orb.big ? 10 : 2;
+
+                xp += gainedXP;
+
+                // LEVEL UP CHECK (can chain levels)
+                while (xp >= xpToNextLevel) {
+
+                    xp -= xpToNextLevel;
+                    level++;
+
+                    xpToNextLevel = 20 + (level * 15);
+                }
+
+                xpIterator.remove();
+            }
+
+            // optional: remove dead slow orbs
+            if (orb.speed < 1f) {
+                xpIterator.remove();
+            }
         }
 
         // ======================================================
@@ -739,6 +871,18 @@ public class MyRogueLikeGame extends ApplicationAdapter {
                 100, 
                 150
         );
+
+        // LEVEL TEXT (top of stat menu)
+        drawNumberForward(level, 20, 225);
+
+        // XP DISPLAY (below level)
+        drawNumberForward(xp, 20, 175);
+
+        // slash separator (simple visual spacing hack)
+        batch.draw(numbers[0], 70, 175, 32, 32); // temporary "0" as placeholder for "/"
+
+        // correct forward number
+        drawNumberForward(xpToNextLevel, 110, 175);
 
         drawNumber(currentHealth, 20, 680);
 
