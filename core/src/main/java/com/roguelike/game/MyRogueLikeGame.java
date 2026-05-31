@@ -86,6 +86,7 @@ public class MyRogueLikeGame extends ApplicationAdapter {
     private Texture hpBar;
     private Texture xpBar;
     private Texture slash;
+    private Texture levelIcon;
     private ArrayList<XpOrb> xpOrbs;
 
     // ======================================================
@@ -119,7 +120,7 @@ public class MyRogueLikeGame extends ApplicationAdapter {
     // ======================================================
     // HEALTH
     // ======================================================
-    private int currentHealth = 9;
+    private int currentHealth = 5;
 
     private float damageTimer = 0f;
 
@@ -162,7 +163,7 @@ public class MyRogueLikeGame extends ApplicationAdapter {
     // ======================================================
     // LEVELING SYSTEM
     // ======================================================
-    private int level = 1;
+    private int level = 10;
     private int xp = 0;
     private int xpToNextLevel = 20;
 
@@ -202,6 +203,7 @@ public class MyRogueLikeGame extends ApplicationAdapter {
         xpBar = new Texture("Experience.png");
         slash = new Texture("Slash.png");
         pauseMenu = new Texture("PauseMenu.png");
+        levelIcon = new Texture("Level.png");
 
         // NUMBERS
         numbers[0] = new Texture("NumZero.png");
@@ -640,14 +642,13 @@ public class MyRogueLikeGame extends ApplicationAdapter {
             float distSq = dx * dx + dy * dy;
 
             // pickup radius
-            if (distSq < 900f) { // ~30px radius
+            if (distSq < 900f) {
 
-                // XP VALUES
                 int gainedXP = orb.big ? 10 : 2;
 
                 xp += gainedXP;
 
-                // LEVEL UP CHECK (can chain levels)
+                // LEVEL UP CHECK
                 while (xp >= xpToNextLevel) {
 
                     xp -= xpToNextLevel;
@@ -656,11 +657,6 @@ public class MyRogueLikeGame extends ApplicationAdapter {
                     xpToNextLevel = 20 + (level * 15);
                 }
 
-                xpIterator.remove();
-            }
-
-            // optional: remove dead slow orbs
-            if (orb.speed < 1f) {
                 xpIterator.remove();
             }
         }
@@ -759,6 +755,8 @@ public class MyRogueLikeGame extends ApplicationAdapter {
         // NEXT WAVE
         // ======================================================
         if (enemies.isEmpty()) {
+
+            xpOrbs.clear(); // remove leftover XP from previous wave
 
             wave++;
 
@@ -894,10 +892,11 @@ public class MyRogueLikeGame extends ApplicationAdapter {
         float baseX = 30;
         float baseY = 30;
 
-        // ======================================================
-        // LEVEL (top of menu)
-        // ======================================================
-        drawNumberForward(level, (int)(baseX), (int)(baseY + 170), 0.6f);
+        // LEVEL BAR
+        batch.draw(levelIcon, baseX + 230, baseY + 100, 180, 40);
+
+        // LEVEL NUMBER (draw AFTER so it appears in front)
+        drawNumberForward(level,(int)(baseX + 345), (int)(baseY + 112), 0.6f);
 
         // ======================================================
         // HP BAR (inside stat menu)
@@ -908,7 +907,7 @@ public class MyRogueLikeGame extends ApplicationAdapter {
         // ======================================================
         drawNumberForward(currentHealth,
                 (int)(baseX + 320),
-                (int)(baseY + 60),
+                (int)(baseY + 62),
                 0.6f);
 
         // ======================================================
@@ -959,8 +958,8 @@ public class MyRogueLikeGame extends ApplicationAdapter {
 
         String s = String.valueOf(value);
 
-        float size = 32f * scale;
-        float spacing = 34f * scale;
+        float size = 24f * scale;
+        float spacing = 24f * scale;
 
         for (int i = 0; i < s.length(); i++) {
 
