@@ -67,6 +67,7 @@ public class MyRogueLikeGame extends ApplicationAdapter {
     private Texture[] numbers = new Texture[10];
     private Texture xpTexture, bigXpTexture;
     private Texture statMenu, hpBar, xpBar, slash, levelIcon;
+    private Texture controlMenu;
     private ArrayList<XpOrb> xpOrbs;
 
     // WORLD / CAMERA
@@ -108,6 +109,9 @@ public class MyRogueLikeGame extends ApplicationAdapter {
     private float pauseCenterX = 640, pauseCenterY = 360;
     private int pauseSelection = 0;
     private float pauseAnim = 0f;
+
+    // CONTROL MENU
+    private boolean showControls = false;
 
     // LEVEL UP UI
     private boolean levelUpScreen = false;
@@ -187,6 +191,7 @@ public class MyRogueLikeGame extends ApplicationAdapter {
         magicIcon = new Texture("Magic.png");
         speedIcon = new Texture("Speed.png");
         strengthIcon = new Texture("Strength.png");
+        controlMenu = new Texture("ControlMenu.png");
 
         // NUMBER TEXTURES
         numbers[0] = new Texture("NumZero.png");
@@ -342,6 +347,13 @@ public class MyRogueLikeGame extends ApplicationAdapter {
         }
 
         // ======================================================
+        // CONTROL MENU TOGGLE
+        // ======================================================
+        if (Gdx.input.isKeyJustPressed(Input.Keys.M)) {
+            showControls = !showControls;
+        }
+
+        // ======================================================
         // PAUSED GAME STATE (FREEZE GAME LOGIC)
         // ======================================================
         if (paused) {
@@ -398,6 +410,24 @@ public class MyRogueLikeGame extends ApplicationAdapter {
 
             // reset color state after tinting
             batch.setColor(Color.WHITE);
+
+            batch.end();
+
+            return;
+        }
+
+        // ======================================================
+        // CONTROL MENU
+        // ======================================================
+        if (showControls) {
+
+            Gdx.gl.glClearColor(0f, 0f, 0f, 1f);
+            Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+
+            batch.setProjectionMatrix(uiCamera.combined);
+            batch.begin();
+
+            batch.draw(controlMenu, 0, 0, 1280, 720);
 
             batch.end();
 
