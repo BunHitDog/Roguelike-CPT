@@ -81,6 +81,7 @@ public class MyRogueLikeGame extends ApplicationAdapter {
     private boolean hasBuffPotion = false;
     private boolean hasHealthPotion = false;
     private boolean buffActive = false;
+    private ArrayList<Potion> potions;
 
     // ======================================================
     // BACKGROUND
@@ -199,7 +200,7 @@ public class MyRogueLikeGame extends ApplicationAdapter {
         private float fireRateMultiplier = 1f;
 
         private static final float SLIME_BASE_SPEED = PLAYER_SPEED * 0.5f;
-        private static final float SPIKE_SLIME_SPEED = PLAYER_SPEED * 0.80f;
+        private static final float SPIKE_SLIME_SPEED = PLAYER_SPEED * 0.75f;
         public static final float SHOOTER_FIRE_INTERVAL = 2f;
         public static final float BOSS_SPEED = PLAYER_SPEED * 0.25f;
         public static final float BOSS_SHOOT_INTERVAL = SHOOTER_FIRE_INTERVAL / 2f;
@@ -281,6 +282,7 @@ public class MyRogueLikeGame extends ApplicationAdapter {
         kunais = new ArrayList<>();
         enemyProjectiles = new ArrayList<>();
         xpOrbs = new ArrayList<>();
+        potions = new ArrayList<>();
         
 
         random = new Random();
@@ -519,19 +521,16 @@ public class MyRogueLikeGame extends ApplicationAdapter {
         if (burnTimer > 0) {
 
             burnTimer -= delta;
-
             burnDamageTimer += delta;
 
+            // deal damage ONCE after 10 seconds, then burn ends
             if (burnDamageTimer >= 10f) {
 
                 currentHealth -= 1;
 
+                burnTimer = 0f;
                 burnDamageTimer = 0f;
             }
-        }
-
-        if (slowTimer > 0) {
-            slowTimer -= delta;
         }
 
         if (stunTimer > 0) {
@@ -592,6 +591,7 @@ public class MyRogueLikeGame extends ApplicationAdapter {
 
         if (slowTimer > 0) {
             currentSpeed *= 0.5f;
+            slowTimer -= delta;
         }
 
         playerX += moveX * currentSpeed * delta;
@@ -697,17 +697,41 @@ public class MyRogueLikeGame extends ApplicationAdapter {
                     if (e.hp <= 0) {
 
                         // ===========================
-                        // POTION DROPS (5%)
+                        // HEALTH POTION DROP (5%)
                         // ===========================
-
-                        // health potion
                         if (random.nextFloat() < 0.05f) {
-                            hasHealthPotion = true;
+
+                            float angle = random.nextFloat() * 360f;
+
+                            float dx = (float)Math.cos(Math.toRadians(angle));
+                            float dy = (float)Math.sin(Math.toRadians(angle));
+
+                            potions.add(new Potion(
+                                    e.x + e.size / 2f,
+                                    e.y + e.size / 2f,
+                                    dx,
+                                    dy,
+                                    true   // health potion
+                            ));
                         }
 
-                        // buff potion
+                        // ===========================
+                        // BUFF POTION DROP (5%)
+                        // ===========================
                         if (random.nextFloat() < 0.05f) {
-                            hasBuffPotion = true;
+
+                            float angle = random.nextFloat() * 360f;
+
+                            float dx = (float)Math.cos(Math.toRadians(angle));
+                            float dy = (float)Math.sin(Math.toRadians(angle));
+
+                            potions.add(new Potion(
+                                    e.x + e.size / 2f,
+                                    e.y + e.size / 2f,
+                                    dx,
+                                    dy,
+                                    false  // buff potion
+                            ));
                         }
 
                         // XP DROP (KEEP YOUR EXISTING CODE HERE EXACTLY)
@@ -789,7 +813,7 @@ public class MyRogueLikeGame extends ApplicationAdapter {
 
                 else {
 
-                    stunTimer = 1f;
+                    stunTimer = 0.5f;
                 }
 
                 projectileIterator.remove();
@@ -813,7 +837,6 @@ public class MyRogueLikeGame extends ApplicationAdapter {
             if (distSq < 900f) {
 
                 int gainedXP = orb.big ? 10 : 2;
-
                 xp += gainedXP;
 
                 // LEVEL UP CHECK (FIXED - NO STACKING BUG)
@@ -828,11 +851,34 @@ public class MyRogueLikeGame extends ApplicationAdapter {
 
                     levelUpScreen = true;
                     levelUpSelection = 0;
-}
+                }
 
                 xpIterator.remove();
             }
         }
+
+        Iterator<Potion> potionIterator = potions.iterator();
+
+        while (potionIterator.hasNext()) {
+
+            Potion p = potionIterator.next();
+
+            float dx = (p.x + p.size / 2f) - (playerX + PLAYER_SIZE / 2f);
+            float dy = (p.y + p.size / 2f) - (playerY + PLAYER_SIZE / 2f);
+
+            float distSq = dx * dx + dy * dy;
+
+            if (distSq < 900f) {
+
+                if (p.health) {
+                    hasHealthPotion = true;
+                } else {
+                    hasBuffPotion = true;
+                }
+
+                potionIterator.remove();
+            }
+}
 
         // ======================================================
         // ENEMIES
@@ -932,13 +978,14 @@ public class MyRogueLikeGame extends ApplicationAdapter {
             buffActive = false;
 
             xpOrbs.clear();
+            potions.clear(); // 🔥 ADD THIS
+
             wave++;
 
             currentHealth = maxHealth;
 
             spawnWave();
         }
-
         // ======================================================
         // RENDER
         // ======================================================
@@ -1049,6 +1096,17 @@ public class MyRogueLikeGame extends ApplicationAdapter {
                 orb.y,
                 orb.size,
                 orb.size
+            );
+        }
+
+        for (Potion p : potions) {
+
+            batch.draw(
+                    p.health ? healthPotion : buffPotion,
+                    p.x,
+                    p.y,
+                    p.size,
+                    p.size
             );
         }
 
