@@ -36,17 +36,11 @@ public class Enemy {
     /** Controls red flash effect when taking damage. */
     public float hitFlashTimer = 0f;
 
+    /** Enemy type: 0 = normal, 1 = shooter, 2 = spike */
+    public int type = 0;
+
     /**
      * Updates enemy movement and shooting behavior.
-     *
-     * @param delta Time elapsed since the last frame
-     * @param playerX Player x-position
-     * @param playerY Player y-position
-     * @param projectiles Active projectile list
-     * @param fire Fire projectile texture
-     * @param ice Ice projectile texture
-     * @param lightning Lightning projectile texture
-     * @param random Random number generator
      */
     public void update(float delta, float playerX, float playerY,
                        java.util.ArrayList<EnemyProjectile> projectiles,
@@ -56,6 +50,14 @@ public class Enemy {
         // Reduce hit flash duration
         if (hitFlashTimer > 0) {
             hitFlashTimer -= delta;
+        }
+
+        // ===============================
+        // SPIKE SLIME OVERRIDE BEHAVIOR
+        // ===============================
+        if (type == 2) {
+            speed = 220f; // fast like player
+            hp = 1;       // always 1 HP
         }
 
         // Calculate direction toward player
@@ -81,7 +83,15 @@ public class Enemy {
         // Handle shooting cooldown
         shootTimer += delta;
 
-        if (shootTimer >= 1.25f) {
+        float fireRate;
+
+        if (type == 99) {
+            fireRate = MyRogueLikeGame.BOSS_SHOOT_INTERVAL;
+        } else {
+            fireRate = MyRogueLikeGame.SHOOTER_FIRE_INTERVAL;
+        }
+
+        if (shootTimer >= fireRate) {
             shootTimer = 0f;
 
             EnemyProjectile p = new EnemyProjectile();
@@ -121,21 +131,35 @@ public class Enemy {
 
     /**
      * Draws the enemy to the screen.
-     *
-     * @param batch SpriteBatch used for rendering
-     * @param left Texture used when facing left
-     * @param right Texture used when facing right
      */
-    public void draw(SpriteBatch batch, Texture left, Texture right) {
+    public void draw(SpriteBatch batch, Texture left, Texture right, Texture spikeTexture, Texture kingTexture) {
 
         // Flash red when recently hit
         if (hitFlashTimer > 0) {
             batch.setColor(1, 0, 0, 1);
         }
 
-        batch.draw(movingLeft ? left : right, x, y, size, size);
+        // ===============================
+        // SELECT CORRECT TEXTURE
+        // ===============================
+        Texture tex = right; // safe default
 
-        // Reset drawing color
+        if (type == 99) {
+            tex = kingTexture;
+        }
+        else if (type == 2) {
+            tex = spikeTexture;
+        }
+        else {
+            tex = movingLeft ? left : right;
+        }
+
+        // ===============================
+        // DRAW
+        // ===============================
+        batch.draw(tex, x, y, size, size);
+
+        // Reset color
         batch.setColor(1, 1, 1, 1);
     }
 }
