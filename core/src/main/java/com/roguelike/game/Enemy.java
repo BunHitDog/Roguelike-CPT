@@ -7,100 +7,108 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 /**
  * Represents an enemy in the game.
  *
- * Enemies move toward the player and can optionally act as ranged
- * shooter enemies that fire projectiles with random elemental effects.
+ * Enemies automatically move toward the player and may optionally shoot
+ * projectiles with random elemental effects (fire, ice, lightning).
  */
 public class Enemy {
 
-    /** Current position of the enemy. */
+    /** X position in world space */
     public float x, y;
 
-    /** Size of the enemy sprite. */
+    /** Size of enemy sprite (width/height) */
     public float size = 96f;
 
-    /** Movement speed of the enemy. */
+    /** Movement speed */
     public float speed = 80f;
 
-    /** Health points of the enemy. */
+    /** Current health points */
     public int hp = 6;
 
-    /** Determines whether this enemy can shoot projectiles. */
+    /** Whether this enemy can shoot projectiles */
     public boolean shooter = false;
 
-    /** Determines which sprite direction to render. */
+    /** Direction flag used for sprite rendering (true = facing left) */
     public boolean movingLeft;
 
-    /** Tracks time between shots for shooter enemies. */
+    /** Timer controlling shooting cooldown */
     public float shootTimer = 0f;
 
-    /** Controls red flash effect when taking damage. */
+    /** Flash timer used when enemy takes damage (red flash effect) */
     public float hitFlashTimer = 0f;
 
-    /** Enemy type: 0 = normal, 1 = shooter, 2 = spike */
+    /** Enemy type: 0 = normal, 1 = shooter, 2 = spike, 99 = boss */
     public int type = 0;
 
     /**
-     * Updates enemy movement and shooting behavior.
+     * Updates enemy movement, AI behavior, and shooting.
+     *
+     * @param delta time since last frame
+     * @param playerX player X position
+     * @param playerY player Y position
+     * @param projectiles list where enemy projectiles are added
+     * @param fire texture for fire projectile
+     * @param ice texture for ice projectile
+     * @param lightning texture for lightning projectile
+     * @param random RNG used for projectile type selection
      */
-    public void update(float delta, float playerX, float playerY,
-                       java.util.ArrayList<EnemyProjectile> projectiles,
-                       Texture fire, Texture ice, Texture lightning,
-                       Random random) {
+    public void update(
+            float delta,
+            float playerX,
+            float playerY,
+            java.util.ArrayList<EnemyProjectile> projectiles,
+            Texture fire,
+            Texture ice,
+            Texture lightning,
+            Random random) {
 
-        // Reduce hit flash duration
+        // reduce hit flash timer each frame
         if (hitFlashTimer > 0) {
             hitFlashTimer -= delta;
         }
 
-        // ===============================
-        // SPIKE SLIME OVERRIDE BEHAVIOR
-        // ===============================
+        // spike enemy override stats
         if (type == 2) {
-            speed = 220f; // fast like player
-            hp = 1;       // always 1 HP
+            speed = 220f;
+            hp = 1;
         }
 
-        // Calculate direction toward player
+        // direction toward player
         float dx = playerX - x;
         float dy = playerY - y;
 
         float dist = (float) Math.sqrt(dx * dx + dy * dy);
 
-        // Move toward player if not already overlapping
+        // move toward player if not overlapping
         if (dist > 0.001f) {
             x += (dx / dist) * speed * delta;
             y += (dy / dist) * speed * delta;
         }
 
-        // Update facing direction
+        // update sprite direction
         movingLeft = dx < 0;
 
-        // Stop here if enemy is not a shooter
-        if (!shooter) {
-            return;
-        }
+        // stop if not shooter
+        if (!shooter) return;
 
-        // Handle shooting cooldown
+        // update shooting timer
         shootTimer += delta;
 
-        float fireRate;
+        // determine fire rate based on enemy type
+        float fireRate = (type == 99)
+                ? MyRogueLikeGame.BOSS_SHOOT_INTERVAL
+                : MyRogueLikeGame.SHOOTER_FIRE_INTERVAL;
 
-        if (type == 99) {
-            fireRate = MyRogueLikeGame.BOSS_SHOOT_INTERVAL;
-        } else {
-            fireRate = MyRogueLikeGame.SHOOTER_FIRE_INTERVAL;
-        }
-
+        // shoot projectile if cooldown finished
         if (shootTimer >= fireRate) {
             shootTimer = 0f;
 
             EnemyProjectile p = new EnemyProjectile();
 
-            // Spawn projectile at enemy center
+            // spawn at enemy center
             p.x = x + size / 2f;
             p.y = y + size / 2f;
 
-            // Aim toward player
+            // direction toward player
             float dirX = playerX - x;
             float dirY = playerY - y;
 
@@ -111,7 +119,7 @@ public class Enemy {
                 p.dy = dirY / dist2;
             }
 
-            // Select random projectile type
+            // random projectile element
             int rand = random.nextInt(3);
 
             if (rand == 0) {
@@ -130,36 +138,41 @@ public class Enemy {
     }
 
     /**
-     * Draws the enemy to the screen.
+     * Renders the enemy to the screen.
+     *
+     * @param batch SpriteBatch used for drawing
+     * @param left texture when facing left
+     * @param right texture when facing right
+     * @param spikeTexture texture for spike enemy
+     * @param kingTexture texture for boss enemy
      */
-    public void draw(SpriteBatch batch, Texture left, Texture right, Texture spikeTexture, Texture kingTexture) {
+    public void draw(
+            SpriteBatch batch,
+            Texture left,
+            Texture right,
+            Texture spikeTexture,
+            Texture kingTexture) {
 
-        // Flash red when recently hit
+        // red flash when hit
         if (hitFlashTimer > 0) {
             batch.setColor(1, 0, 0, 1);
         }
 
-        // ===============================
-        // SELECT CORRECT TEXTURE
-        // ===============================
-        Texture tex = right; // safe default
+        // choose texture based on type/state
+        Texture tex = right;
 
         if (type == 99) {
             tex = kingTexture;
-        }
-        else if (type == 2) {
+        } else if (type == 2) {
             tex = spikeTexture;
-        }
-        else {
+        } else {
             tex = movingLeft ? left : right;
         }
 
-        // ===============================
-        // DRAW
-        // ===============================
+        // draw enemy
         batch.draw(tex, x, y, size, size);
 
-        // Reset color
+        // reset color so it doesn't affect other sprites
         batch.setColor(1, 1, 1, 1);
     }
 }

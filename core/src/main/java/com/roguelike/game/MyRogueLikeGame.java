@@ -20,206 +20,140 @@ import com.badlogic.gdx.math.Vector3;
 
 public class MyRogueLikeGame extends ApplicationAdapter {
 
+    // MAP / RENDERING
     private TiledMap map;
     private OrthogonalTiledMapRenderer renderer;
-
     private SpriteBatch batch;
     private ShapeRenderer shapeRenderer;
 
-    // ======================================================
     // PLAYER
-    // ======================================================
     private Texture ninjaDown, ninjaLeft, ninjaRight, ninjaBack;
     private Texture currentPlayerTexture;
-
     private float playerX, playerY;
-
     private float playerHitFlashTimer = 0f;
 
     // STATUS EFFECTS
     private float burnTimer = 0f;
     private float burnDamageTimer = 0f;
-
     private float slowTimer = 0f;
-
     private float stunTimer = 0f;
 
-    // ======================================================
     // WEAPON
-    // ======================================================
     private Texture kunaiTexture;
-
     private float shootCooldown = 0f;
     private final float BASE_SHOOT_DELAY = 0.25f;
-
     private ArrayList<Kunai> kunais;
 
-    // ======================================================
     // ENEMY PROJECTILES
-    // ======================================================
-    private Texture fireBallTexture;
-    private Texture iceBallTexture;
-    private Texture lightningBallTexture;
-
+    private Texture fireBallTexture, iceBallTexture, lightningBallTexture;
     private ArrayList<EnemyProjectile> enemyProjectiles;
 
-    // ======================================================
-    // ENEMY
-    // ======================================================
-    private Texture slimeLeft, slimeRight;
-    private Texture spikeSlime;
-    private Texture kingSlime;
-
+    // ENEMIES
+    private Texture slimeLeft, slimeRight, spikeSlime, kingSlime;
     private ArrayList<Enemy> enemies;
     private Random random;
 
-    // ======================================================
     // POTIONS
-    // ======================================================
-    private Texture buffPotion;
-    private Texture healthPotion;
+    private Texture buffPotion, healthPotion;
     private boolean hasBuffPotion = false;
     private boolean hasHealthPotion = false;
     private boolean buffActive = false;
     private ArrayList<Potion> potions;
 
-    // ======================================================
     // BACKGROUND
-    // ======================================================
     private Texture background;
 
-    // ======================================================
-    // NUMBERS
-    // ======================================================
+    // UI / HUD TEXTURES
     private Texture[] numbers = new Texture[10];
-    private Texture xpTexture;
-    private Texture bigXpTexture;
-    private Texture statMenu;
-    private Texture hpBar;
-    private Texture xpBar;
-    private Texture slash;
-    private Texture levelIcon;
+    private Texture xpTexture, bigXpTexture;
+    private Texture statMenu, hpBar, xpBar, slash, levelIcon;
     private ArrayList<XpOrb> xpOrbs;
 
-    // ======================================================
     // WORLD / CAMERA
-    // ======================================================
-    private float worldWidth;
-    private float worldHeight;
-
-    private float playableMaxX;
-    private float playableMaxY;
-    private float playableMinX;
-    private float playableMinY;
-
+    private float worldWidth, worldHeight;
+    private float playableMaxX, playableMaxY, playableMinX, playableMinY;
 
     private static final float WORLD_SIZE = 2048f;
-
     private static final float PLAYER_SIZE = 48f;
-
     private static final float PLAYER_SPEED = 220f;
 
     private OrthographicCamera camera;
     private OrthographicCamera uiCamera;
-
     private static final float CAMERA_LERP = 0.1f;
 
-    // ======================================================
-    // WAVES
-    // ======================================================
+    // GAME STATE
     private int wave = 1;
 
-    // ======================================================
     // HEALTH
-    // ======================================================
     private int maxHealth = 5;
     private int currentHealth = maxHealth;
-
     private float damageTimer = 0f;
-
     private final float DAMAGE_INTERVAL = 3f;
-
     private boolean wasTouching = false;
 
-    // ======================================================
     // TIMER
-    // ======================================================
     private float survivalTime = 0f;
 
-    // ======================================================
-    // SHAKE
-    // ======================================================
+    // SCREEN SHAKE
     private float shakeTime = 0f;
-
     private float shakeIntensity = 4f;
-
     private Random shakeRandom = new Random();
 
-    // ======================================================
     // DEBUG
-    // ======================================================
     private boolean debugHitboxes = true;
 
-    // ======================================================
     // PAUSE MENU
-    // ======================================================
     private boolean paused = false;
-
-    private Texture startButton;
-    private Texture exitButton;
-    private float pauseCenterX = 640;
-    private float pauseCenterY = 360;
+    private Texture startButton, exitButton, pauseMenu;
+    private float pauseCenterX = 640, pauseCenterY = 360;
     private int pauseSelection = 0;
     private float pauseAnim = 0f;
-    private Texture pauseMenu;
-    private Texture levelScreen;
-    private Texture healthIcon;
-    private Texture magicIcon;
-    private Texture speedIcon;
-    private Texture strengthIcon;
 
-    // LEVEL MENU
-
+    // LEVEL UP UI
     private boolean levelUpScreen = false;
     private int levelUpSelection = 0;
     private boolean levelingUp = false;
+    private Texture levelScreen, healthIcon, magicIcon, speedIcon, strengthIcon;
 
-    // ======================================================
-    // LEVELING SYSTEM
-    // ======================================================
+    // LEVEL SYSTEM
     private int level = 1;
     private int xp = 0;
     private int xpToNextLevel = 20;
 
-    // ======================================================
-    // PLAYER STATS (UPGRADES)
-    // ======================================================
+    // PLAYER STATS
+    private int kunaiDamage = 1;
+    private float speedMultiplier = 1f;
+    private float fireRateMultiplier = 1f;
 
-        private int kunaiDamage = 1;
-        private float speedMultiplier = 1f;
-        private float fireRateMultiplier = 1f;
-
-        private static final float SLIME_BASE_SPEED = PLAYER_SPEED * 0.5f;
-        private static final float SPIKE_SLIME_SPEED = PLAYER_SPEED * 0.75f;
-        public static final float SHOOTER_FIRE_INTERVAL = 2f;
-        public static final float BOSS_SPEED = PLAYER_SPEED * 0.25f;
-        public static final float BOSS_SHOOT_INTERVAL = SHOOTER_FIRE_INTERVAL / 2f;
+    private static final float SLIME_BASE_SPEED = PLAYER_SPEED * 0.5f;
+    private static final float SPIKE_SLIME_SPEED = PLAYER_SPEED * 0.75f;
+    public static final float SHOOTER_FIRE_INTERVAL = 2f;
+    public static final float BOSS_SPEED = PLAYER_SPEED * 0.25f;
+    public static final float BOSS_SHOOT_INTERVAL = SHOOTER_FIRE_INTERVAL / 2f;
 
     @Override
     public void create() {
 
+        // CORE RENDERING
         batch = new SpriteBatch();
         shapeRenderer = new ShapeRenderer();
 
-        // PLAYER
+        // CAMERA SETUP
+        camera = new OrthographicCamera();
+        camera.setToOrtho(false, 1280, 720);
+        camera.zoom = 0.65f;
+
+        uiCamera = new OrthographicCamera();
+        uiCamera.setToOrtho(false, 1280, 720);
+
+        // PLAYER TEXTURES
         ninjaDown = new Texture("Ninja.png");
         ninjaLeft = new Texture("Ninja-Left.png");
         ninjaRight = new Texture("Ninja-Right.png");
         ninjaBack = new Texture("Ninja-Back.png");
-
         currentPlayerTexture = ninjaDown;
 
-        // ENEMY
+        // ENEMY TEXTURES
         slimeLeft = new Texture("SlimeLeft.png");
         slimeRight = new Texture("SlimeRight.png");
         spikeSlime = new Texture("SpikeSlime.png");
@@ -228,18 +162,17 @@ public class MyRogueLikeGame extends ApplicationAdapter {
         // WEAPON
         kunaiTexture = new Texture("Kunai.png");
 
-        // PROJECTILES
+        // PROJECTILES + XP
         fireBallTexture = new Texture("Fire Ball.png");
         iceBallTexture = new Texture("Ice Ball.png");
         lightningBallTexture = new Texture("Lightning Ball.png");
         xpTexture = new Texture("Xp.png");
 
         // POTIONS
-
         buffPotion = new Texture("BuffPotion.png");
         healthPotion = new Texture("HealthPotion.png");
-        
-        // MENU
+
+        // UI / MENU TEXTURES
         bigXpTexture = new Texture("BigXp.png");
         statMenu = new Texture("StatMenu.png");
         startButton = new Texture("Start.png");
@@ -255,7 +188,7 @@ public class MyRogueLikeGame extends ApplicationAdapter {
         speedIcon = new Texture("Speed.png");
         strengthIcon = new Texture("Strength.png");
 
-        // NUMBERS
+        // NUMBER TEXTURES
         numbers[0] = new Texture("NumZero.png");
         numbers[1] = new Texture("NumOne.png");
         numbers[2] = new Texture("NumTwo.png");
@@ -267,35 +200,27 @@ public class MyRogueLikeGame extends ApplicationAdapter {
         numbers[8] = new Texture("NumEight.png");
         numbers[9] = new Texture("NumNine.png");
 
-        // TILEMAP
+        // MAP
         map = new TmxMapLoader().load("maps/cpt_map.tmx");
         renderer = new OrthogonalTiledMapRenderer(map, 1f);
 
-        camera = new OrthographicCamera();
-        camera.setToOrtho(false, 1280, 720);
-        camera.zoom = 0.65f;
-
-        uiCamera = new OrthographicCamera();
-        uiCamera.setToOrtho(false, 1280, 720);
-
+        // GAME DATA STRUCTURES
         enemies = new ArrayList<>();
         kunais = new ArrayList<>();
         enemyProjectiles = new ArrayList<>();
         xpOrbs = new ArrayList<>();
         potions = new ArrayList<>();
-        
-
         random = new Random();
 
-        // Get actual map size from TiledMap
-        worldWidth = map.getProperties().get("width", Integer.class) * 
+        // WORLD SIZE
+        worldWidth = map.getProperties().get("width", Integer.class) *
                     map.getProperties().get("tilewidth", Integer.class);
 
-        worldHeight = map.getProperties().get("height", Integer.class) * 
+        worldHeight = map.getProperties().get("height", Integer.class) *
                     map.getProperties().get("tileheight", Integer.class);
 
-        // === IMPROVED PLAYABLE AREA ===
-        float border = 70f;                    // ← Change this number to adjust border thickness
+        // PLAYABLE AREA
+        float border = 70f;
         playableMinX = border;
         playableMinY = border;
         playableMaxX = worldWidth - border;
@@ -304,9 +229,11 @@ public class MyRogueLikeGame extends ApplicationAdapter {
         System.out.println("Map size loaded: " + worldWidth + " x " + worldHeight);
         System.out.println("Playable border set to: " + border + " pixels");
 
-        // Spawn player in the center of the actual map
+        // PLAYER SPAWN
         playerX = (playableMinX + playableMaxX) / 2f - PLAYER_SIZE / 2f;
         playerY = (playableMinY + playableMaxY) / 2f - PLAYER_SIZE / 2f;
+
+        // START GAME
         spawnWave();
     }
 
@@ -316,14 +243,12 @@ public class MyRogueLikeGame extends ApplicationAdapter {
         float delta = Gdx.graphics.getDeltaTime();
 
         // ======================================================
-        // LEVEL UP SCREEN (FREEZE GAME)
+        // LEVEL UP SCREEN (GAME PAUSED)
         // ======================================================
+        // If active, game logic is frozen and only level-up UI runs
         if (levelUpScreen) {
 
-            // ======================================================
-            // LEVEL UP INPUT (SIMPLE LINEAR NAVIGATION)
-            // ======================================================
-
+            // INPUT: move selection left/right
             if (Gdx.input.isKeyJustPressed(Input.Keys.LEFT)) {
                 levelUpSelection--;
             }
@@ -332,44 +257,40 @@ public class MyRogueLikeGame extends ApplicationAdapter {
                 levelUpSelection++;
             }
 
-            // wrap around (IMPORTANT)
-            if (levelUpSelection < 0) {
-                levelUpSelection = 3;
-            }
-            if (levelUpSelection > 3) {
-                levelUpSelection = 0;
-            }
+            // WRAP SELECTION (0–3 options loop)
+            if (levelUpSelection < 0) levelUpSelection = 3;
+            if (levelUpSelection > 3) levelUpSelection = 0;
 
-            // confirm selection
+            // CONFIRM SELECTION (apply upgrade)
             if (Gdx.input.isKeyJustPressed(Input.Keys.ENTER) ||
                 Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
-                    
 
                 if (levelUpSelection == 0) {
                     maxHealth += 1;
-                    currentHealth = maxHealth;
+                    currentHealth = maxHealth; // full heal on upgrade
                 }
 
                 else if (levelUpSelection == 1) {
-                    fireRateMultiplier += 0.01f; // Magic = faster shooting
+                    fireRateMultiplier += 0.01f; // faster shooting
                 }
 
                 else if (levelUpSelection == 2) {
-                    speedMultiplier += 0.01f; // Speed = movement boost
+                    speedMultiplier += 0.01f; // movement boost
                 }
 
                 else if (levelUpSelection == 3) {
-                    kunaiDamage += 1; // Strength = more damage
+                    kunaiDamage += 1; // damage increase
                 }
+
                 levelUpScreen = false;
                 levelingUp = false;
             }
 
-            // DRAW LEVEL SCREEN ONLY
-
+            // CLEAR SCREEN (level-up only view)
             Gdx.gl.glClearColor(0, 0, 0, 1);
             Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
+            // UI RENDER
             batch.setProjectionMatrix(uiCamera.combined);
             batch.begin();
 
@@ -378,29 +299,34 @@ public class MyRogueLikeGame extends ApplicationAdapter {
             float startX = 320;
             float y = 250;
 
-            // highlight selected icon
+            // ICON HIGHLIGHT ALPHA (selected = bright, others = faded)
             float alpha0 = (levelUpSelection == 0) ? 1f : 0.4f;
             float alpha1 = (levelUpSelection == 1) ? 1f : 0.4f;
             float alpha2 = (levelUpSelection == 2) ? 1f : 0.4f;
             float alpha3 = (levelUpSelection == 3) ? 1f : 0.4f;
 
+            // HEALTH UPGRADE
             batch.setColor(1, 1, 1, alpha0);
             batch.draw(healthIcon, startX + 680, y - 50, 100, 100);
 
+            // MAGIC / FIRE RATE UPGRADE
             batch.setColor(1, 1, 1, alpha1);
             batch.draw(magicIcon, startX + 680, y + 100, 100, 100);
 
+            // SPEED UPGRADE
             batch.setColor(1, 1, 1, alpha2);
             batch.draw(speedIcon, startX + 140, y - 50, 100, 100);
 
+            // STRENGTH / DAMAGE UPGRADE
             batch.setColor(1, 1, 1, alpha3);
             batch.draw(strengthIcon, startX + 140, y + 100, 100, 100);
 
+            // RESET COLOR (important after alpha changes)
             batch.setColor(1, 1, 1, 1);
 
             batch.end();
 
-            return;
+            return; // stop full game render while level-up screen is active
         }
 
         // ======================================================
@@ -409,18 +335,18 @@ public class MyRogueLikeGame extends ApplicationAdapter {
         if (Gdx.input.isKeyJustPressed(Input.Keys.P)) {
             paused = !paused;
 
-            // RESET MENU STATE WHEN OPENING PAUSE
+            // reset menu selection when opening pause menu
             if (paused) {
                 pauseSelection = 0;
             }
         }
 
         // ======================================================
-        // PAUSED GAME LOGIC (FREEZE EVERYTHING)
+        // PAUSED GAME STATE (FREEZE GAME LOGIC)
         // ======================================================
         if (paused) {
 
-            // navigation
+            // MENU NAVIGATION
             if (Gdx.input.isKeyJustPressed(Input.Keys.UP) ||
                 Gdx.input.isKeyJustPressed(Input.Keys.W)) {
                 pauseSelection = 0;
@@ -431,28 +357,24 @@ public class MyRogueLikeGame extends ApplicationAdapter {
                 pauseSelection = 1;
             }
 
-            // select option
+            // MENU SELECT
             if (Gdx.input.isKeyJustPressed(Input.Keys.ENTER) ||
                 Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
 
                 if (pauseSelection == 0) {
-                    paused = false;
+                    paused = false; // resume game
                 }
 
                 if (pauseSelection == 1) {
-                    Gdx.app.exit();
+                    Gdx.app.exit(); // exit game
                 }
             }
 
-            // ======================================================
-            // CLEAR SCREEN (NO WHITE FLASH)
-            // ======================================================
+            // CLEAR SCREEN (avoid frame artifacts)
             Gdx.gl.glClearColor(0f, 0f, 0f, 1f);
             Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-            // ======================================================
-            // DRAW PAUSE MENU ONLY
-            // ======================================================
+            // RENDER PAUSE MENU UI ONLY
             batch.setProjectionMatrix(uiCamera.combined);
             batch.begin();
 
@@ -462,29 +384,19 @@ public class MyRogueLikeGame extends ApplicationAdapter {
             float centerX = 640 - 100;
             float centerY = 360;
 
-            // ======================================================
-            // START BUTTON (always visible)
-            // ======================================================
-            if (pauseSelection == 0) {
-                batch.setColor(1f, 1f, 1f, 1f);      // bright (selected)
-            } else {
-                batch.setColor(0.5f, 0.5f, 0.5f, 1f); // dim (not selected)
-            }
+            // START / RESUME BUTTON
+            batch.setColor(pauseSelection == 0 ? 1f : 0.5f,
+                        pauseSelection == 0 ? 1f : 0.5f,
+                        pauseSelection == 0 ? 1f : 0.5f, 1f);
             batch.draw(startButton, centerX, centerY + 60, 200, 60);
 
-            // ======================================================
-            // EXIT BUTTON (always visible)
-            // ======================================================
-            if (pauseSelection == 1) {
-                batch.setColor(1f, 1f, 1f, 1f);
-            } else {
-                batch.setColor(0.5f, 0.5f, 0.5f, 1f);
-            }
+            // EXIT BUTTON
+            batch.setColor(pauseSelection == 1 ? 1f : 0.5f,
+                        pauseSelection == 1 ? 1f : 0.5f,
+                        pauseSelection == 1 ? 1f : 0.5f, 1f);
             batch.draw(exitButton, centerX, centerY - 60, 200, 60);
 
-            // reset color
-            batch.setColor(Color.WHITE);
-
+            // reset color state after tinting
             batch.setColor(Color.WHITE);
 
             batch.end();
@@ -496,38 +408,35 @@ public class MyRogueLikeGame extends ApplicationAdapter {
         // GAME RUNNING (NORMAL MODE)
         // ======================================================
         survivalTime += delta;
-
         shootCooldown -= delta;
 
-        // =====================================
-        // POTION USE
-        // =====================================
+        // ======================================================
+        // POTION INPUT (USE ITEMS)
+        // ======================================================
 
-        // Q = health potion
+        // Q = health potion (full heal)
         if (Gdx.input.isKeyJustPressed(Input.Keys.Q) && hasHealthPotion) {
             currentHealth = maxHealth;
             hasHealthPotion = false;
         }
 
-        // E = buff potion
+        // E = buff potion (damage boost)
         if (Gdx.input.isKeyJustPressed(Input.Keys.E) && hasBuffPotion) {
             buffActive = true;
             hasBuffPotion = false;
         }
 
         // ======================================================
-        // STATUS EFFECTS
+        // STATUS EFFECTS (DOT / CONTROL STATES)
         // ======================================================
         if (burnTimer > 0) {
 
             burnTimer -= delta;
             burnDamageTimer += delta;
 
-            // deal damage ONCE after 10 seconds, then burn ends
+            // burn damage triggers once after duration threshold
             if (burnDamageTimer >= 10f) {
-
                 currentHealth -= 1;
-
                 burnTimer = 0f;
                 burnDamageTimer = 0f;
             }
@@ -542,51 +451,42 @@ public class MyRogueLikeGame extends ApplicationAdapter {
         }
 
         // ======================================================
-        // PLAYER MOVEMENT
+        // PLAYER MOVEMENT INPUT
         // ======================================================
         float moveX = 0;
         float moveY = 0;
 
         if (stunTimer <= 0) {
 
-            if (Gdx.input.isKeyPressed(Input.Keys.W)
-                    || Gdx.input.isKeyPressed(Input.Keys.UP)) {
-
+            if (Gdx.input.isKeyPressed(Input.Keys.W) || Gdx.input.isKeyPressed(Input.Keys.UP)) {
                 moveY++;
                 currentPlayerTexture = ninjaBack;
             }
 
-            if (Gdx.input.isKeyPressed(Input.Keys.S)
-                    || Gdx.input.isKeyPressed(Input.Keys.DOWN)) {
-
+            if (Gdx.input.isKeyPressed(Input.Keys.S) || Gdx.input.isKeyPressed(Input.Keys.DOWN)) {
                 moveY--;
                 currentPlayerTexture = ninjaDown;
             }
 
-            if (Gdx.input.isKeyPressed(Input.Keys.A)
-                    || Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
-
+            if (Gdx.input.isKeyPressed(Input.Keys.A) || Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
                 moveX--;
                 currentPlayerTexture = ninjaLeft;
             }
 
-            if (Gdx.input.isKeyPressed(Input.Keys.D)
-                    || Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
-
+            if (Gdx.input.isKeyPressed(Input.Keys.D) || Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
                 moveX++;
                 currentPlayerTexture = ninjaRight;
             }
         }
 
-        float len =
-                (float)Math.sqrt(moveX * moveX + moveY * moveY);
-
+        // normalize movement vector
+        float len = (float)Math.sqrt(moveX * moveX + moveY * moveY);
         if (len > 0) {
-
             moveX /= len;
             moveY /= len;
         }
 
+        // apply speed modifiers
         float currentSpeed = PLAYER_SPEED * speedMultiplier;
 
         if (slowTimer > 0) {
@@ -594,56 +494,42 @@ public class MyRogueLikeGame extends ApplicationAdapter {
             slowTimer -= delta;
         }
 
+        // apply movement
         playerX += moveX * currentSpeed * delta;
         playerY += moveY * currentSpeed * delta;
 
-        // === KEEP PLAYER WITHIN MAP BOUNDS ===
+        // clamp to map bounds
         playerX = Math.max(playableMinX, Math.min(playerX, playableMaxX - PLAYER_SIZE));
         playerY = Math.max(playableMinY, Math.min(playerY, playableMaxY - PLAYER_SIZE));
 
         // ======================================================
-        // MOUSE POSITION
+        // MOUSE AIMING
         // ======================================================
-        Vector3 mouse =
-                new Vector3(
-                        Gdx.input.getX(),
-                        Gdx.input.getY(),
-                        0);
-
+        Vector3 mouse = new Vector3(Gdx.input.getX(), Gdx.input.getY(), 0);
         camera.unproject(mouse);
 
-        float mouseDX =
-                mouse.x - (playerX + PLAYER_SIZE / 2f);
+        float mouseDX = mouse.x - (playerX + PLAYER_SIZE / 2f);
+        float mouseDY = mouse.y - (playerY + PLAYER_SIZE / 2f);
 
-        float mouseDY =
-                mouse.y - (playerY + PLAYER_SIZE / 2f);
-
-        float mouseDist =
-                (float)Math.sqrt(
-                        mouseDX * mouseDX
-                                + mouseDY * mouseDY);
+        float mouseDist = (float)Math.sqrt(mouseDX * mouseDX + mouseDY * mouseDY);
 
         float aimX = 1;
         float aimY = 0;
 
         if (mouseDist > 0.001f) {
-
             aimX = mouseDX / mouseDist;
             aimY = mouseDY / mouseDist;
         }
 
-        float kunaiHoverX =
-                playerX + PLAYER_SIZE / 2f + aimX * 32f;
+        // weapon hover position (visual aim indicator)
+        float kunaiHoverX = playerX + PLAYER_SIZE / 2f + aimX * 32f;
+        float kunaiHoverY = playerY + PLAYER_SIZE / 2f + aimY * 32f;
 
-        float kunaiHoverY =
-                playerY + PLAYER_SIZE / 2f + aimY * 32f;
-
-        // KUNAI ROTATION
-        float hoverRotation =
-            (float)Math.toDegrees(Math.atan2(aimY, aimX)) + 125f;
+        // rotation for thrown kunai
+        float hoverRotation = (float)Math.toDegrees(Math.atan2(aimY, aimX)) + 125f;
 
         // ======================================================
-        // SHOOT
+        // SHOOTING
         // ======================================================
         if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)
                 && shootCooldown <= 0f
@@ -656,7 +542,6 @@ public class MyRogueLikeGame extends ApplicationAdapter {
 
             k.dx = aimX;
             k.dy = aimY;
-
             k.rotation = hoverRotation;
 
             kunais.add(k);
@@ -665,9 +550,9 @@ public class MyRogueLikeGame extends ApplicationAdapter {
         }
 
         // ======================================================
-        // UPDATE KUNAIS
+        // UPDATE KUNAIS (PROJECTILES + ENEMY COLLISION)
         // ======================================================
-       Iterator<Kunai> kunaiIterator = kunais.iterator();
+        Iterator<Kunai> kunaiIterator = kunais.iterator();
 
         while (kunaiIterator.hasNext()) {
 
@@ -677,6 +562,7 @@ public class MyRogueLikeGame extends ApplicationAdapter {
 
             boolean hit = false;
 
+            // check collision against all enemies
             Iterator<Enemy> enemyIterator = enemies.iterator();
 
             while (enemyIterator.hasNext()) {
@@ -684,25 +570,28 @@ public class MyRogueLikeGame extends ApplicationAdapter {
                 Enemy e = enemyIterator.next();
 
                 if (CollisionUtils.isColliding(
-        k.x, k.y,
-        e.x, e.y,
-        e.size / 2f)) {
+                        k.x, k.y,
+                        e.x, e.y,
+                        e.size / 2f)) {
 
+                    // damage calculation (buff = x5 damage)
                     int damage = buffActive ? kunaiDamage * 5 : kunaiDamage;
                     e.hp -= damage;
                     e.hitFlashTimer = 0.15f;
 
                     hit = true;
 
+                    // enemy death logic
                     if (e.hp <= 0) {
 
                         // ===========================
-                        // HEALTH POTION DROP (5%)
+                        // POTION DROPS (RNG BASED)
                         // ===========================
+
+                        // health potion drop (5%)
                         if (random.nextFloat() < 0.05f) {
 
                             float angle = random.nextFloat() * 360f;
-
                             float dx = (float)Math.cos(Math.toRadians(angle));
                             float dy = (float)Math.sin(Math.toRadians(angle));
 
@@ -711,17 +600,14 @@ public class MyRogueLikeGame extends ApplicationAdapter {
                                     e.y + e.size / 2f,
                                     dx,
                                     dy,
-                                    true   // health potion
+                                    true // health potion
                             ));
                         }
 
-                        // ===========================
-                        // BUFF POTION DROP (5%)
-                        // ===========================
+                        // buff potion drop (5%)
                         if (random.nextFloat() < 0.05f) {
 
                             float angle = random.nextFloat() * 360f;
-
                             float dx = (float)Math.cos(Math.toRadians(angle));
                             float dy = (float)Math.sin(Math.toRadians(angle));
 
@@ -730,16 +616,19 @@ public class MyRogueLikeGame extends ApplicationAdapter {
                                     e.y + e.size / 2f,
                                     dx,
                                     dy,
-                                    false  // buff potion
+                                    false // buff potion
                             ));
                         }
 
-                        // XP DROP (KEEP YOUR EXISTING CODE HERE EXACTLY)
+                        // ===========================
+                        // XP DROPS
+                        // ===========================
+
+                        // normal XP orbs
                         for (int i = 0; i < 3; i++) {
                             if (random.nextFloat() < 0.25f) {
 
                                 float angle = random.nextFloat() * 360f;
-
                                 float dx = (float)Math.cos(Math.toRadians(angle));
                                 float dy = (float)Math.sin(Math.toRadians(angle));
 
@@ -748,14 +637,15 @@ public class MyRogueLikeGame extends ApplicationAdapter {
                                         e.y + e.size / 2f,
                                         dx,
                                         dy,
-                                        false));
+                                        false
+                                ));
                             }
                         }
 
+                        // big XP orb (rare)
                         if (random.nextFloat() < 0.10f) {
 
                             float angle = random.nextFloat() * 360f;
-
                             float dx = (float)Math.cos(Math.toRadians(angle));
                             float dy = (float)Math.sin(Math.toRadians(angle));
 
@@ -764,13 +654,14 @@ public class MyRogueLikeGame extends ApplicationAdapter {
                                     e.y + e.size / 2f,
                                     dx,
                                     dy,
-                                    true));
+                                    true
+                            ));
                         }
 
                         enemyIterator.remove();
                     }
 
-                    break;
+                    break; // stop after first hit enemy
                 }
             }
 
@@ -785,34 +676,32 @@ public class MyRogueLikeGame extends ApplicationAdapter {
 
         while (projectileIterator.hasNext()) {
 
-            EnemyProjectile p =
-                    projectileIterator.next();
+            EnemyProjectile p = projectileIterator.next();
 
+            // movement
             p.x += p.dx * p.speed * delta;
             p.y += p.dy * p.speed * delta;
 
+            // collision with player
             if (CollisionUtils.isColliding(
-        p.x, p.y,
-        playerX, playerY,
-        PLAYER_SIZE)) { 
+                    p.x, p.y,
+                    playerX, playerY,
+                    PLAYER_SIZE)) {
 
                 currentHealth -= 1;
-
                 playerHitFlashTimer = 0.2f;
 
+                // status effects based on projectile type
                 if (p.type.equals("fire")) {
-
                     burnTimer = 20f;
                     burnDamageTimer = 0f;
                 }
 
                 else if (p.type.equals("ice")) {
-
                     slowTimer = 3f;
                 }
 
                 else {
-
                     stunTimer = 0.5f;
                 }
 
@@ -820,6 +709,9 @@ public class MyRogueLikeGame extends ApplicationAdapter {
             }
         }
 
+        // ======================================================
+        // UPDATE XP ORBS (PICKUP + LEVELING)
+        // ======================================================
         Iterator<XpOrb> xpIterator = xpOrbs.iterator();
 
         while (xpIterator.hasNext()) {
@@ -833,13 +725,13 @@ public class MyRogueLikeGame extends ApplicationAdapter {
 
             float distSq = dx * dx + dy * dy;
 
-            // pickup radius
+            // pickup radius check
             if (distSq < 900f) {
 
                 int gainedXP = orb.big ? 10 : 2;
                 xp += gainedXP;
 
-                // LEVEL UP CHECK (FIXED - NO STACKING BUG)
+                // LEVEL UP CHECK (prevents stacking level-ups)
                 if (!levelingUp && xp >= xpToNextLevel) {
 
                     levelingUp = true;
@@ -857,6 +749,9 @@ public class MyRogueLikeGame extends ApplicationAdapter {
             }
         }
 
+        // ======================================================
+        // UPDATE POTIONS (PICKUP SYSTEM)
+        // ======================================================
         Iterator<Potion> potionIterator = potions.iterator();
 
         while (potionIterator.hasNext()) {
@@ -868,6 +763,7 @@ public class MyRogueLikeGame extends ApplicationAdapter {
 
             float distSq = dx * dx + dy * dy;
 
+            // pickup radius
             if (distSq < 900f) {
 
                 if (p.health) {
@@ -878,128 +774,124 @@ public class MyRogueLikeGame extends ApplicationAdapter {
 
                 potionIterator.remove();
             }
-}
+        }
 
         // ======================================================
-        // ENEMIES
+        // ENEMIES (UPDATE + PLAYER COLLISION)
         // ======================================================
         int touching = 0;
 
         for (Enemy e : enemies) {
 
-            e.update(delta, playerX, playerY, enemyProjectiles, fireBallTexture, iceBallTexture, lightningBallTexture, random);
+            // update enemy AI + movement + shooting
+            e.update(delta, playerX, playerY, enemyProjectiles,
+                    fireBallTexture, iceBallTexture, lightningBallTexture, random);
 
+            // player collision check
             if (CollisionUtils.isColliding(
-        e.x, e.y,
-        playerX, playerY,
-        e.size / 2f)) {
+                    e.x, e.y,
+                    playerX, playerY,
+                    e.size / 2f)) {
 
                 touching++;
-
                 triggerShake();
                 playerHitFlashTimer = 0.1f;
             }
         }
 
+
         // ======================================================
-        // DAMAGE
+        // DAMAGE SYSTEM (CONTACT DAMAGE OVER TIME)
         // ======================================================
         if (touching > 0) {
 
+            // first frame of contact
             if (!wasTouching) {
-
                 currentHealth -= touching;
-
                 damageTimer = 0f;
             }
 
             damageTimer += delta;
 
+            // periodic damage while still touching enemies
             if (damageTimer >= DAMAGE_INTERVAL) {
-
                 currentHealth -= touching;
-
                 damageTimer = 0f;
             }
 
             wasTouching = true;
-        }
 
-        else {
-
+        } else {
             damageTimer = 0f;
-
             wasTouching = false;
         }
 
         currentHealth = Math.max(0, currentHealth);
 
         if (currentHealth <= 0) {
-            return;
+            return; // player dead -> stop rendering frame logic
         }
 
-        // ======================================================
-        // CAMERA
-        // ======================================================
-        camera.position.x +=
-                (playerX - camera.position.x)
-                        * CAMERA_LERP;
 
-        camera.position.y +=
-                (playerY - camera.position.y)
-                        * CAMERA_LERP;
+        // ======================================================
+        // CAMERA FOLLOW + SHAKE
+        // ======================================================
+        camera.position.x += (playerX - camera.position.x) * CAMERA_LERP;
+        camera.position.y += (playerY - camera.position.y) * CAMERA_LERP;
 
+        // screen shake effect
         if (shakeTime > 0) {
 
             shakeTime -= delta;
 
-            camera.position.x +=
-                    (shakeRandom.nextFloat() - 0.5f)
-                            * 2f * shakeIntensity;
-
-            camera.position.y +=
-                    (shakeRandom.nextFloat() - 0.5f)
-                            * 2f * shakeIntensity;
+            camera.position.x += (shakeRandom.nextFloat() - 0.5f) * 2f * shakeIntensity;
+            camera.position.y += (shakeRandom.nextFloat() - 0.5f) * 2f * shakeIntensity;
         }
 
         camera.update();
 
+        // clamp camera to world bounds
         float cameraHalfWidth = camera.viewportWidth * camera.zoom * 0.5f;
         float cameraHalfHeight = camera.viewportHeight * camera.zoom * 0.5f;
 
         camera.position.x = Math.max(cameraHalfWidth, Math.min(camera.position.x, worldWidth - cameraHalfWidth));
         camera.position.y = Math.max(cameraHalfHeight, Math.min(camera.position.y, worldHeight - cameraHalfHeight));
 
+
         // ======================================================
-        // NEXT WAVE
+        // WAVE PROGRESSION
         // ======================================================
         if (enemies.isEmpty()) {
 
             buffActive = false;
 
             xpOrbs.clear();
-            potions.clear(); // 🔥 ADD THIS
+            potions.clear();
 
             wave++;
-
             currentHealth = maxHealth;
 
             spawnWave();
         }
+
+
         // ======================================================
-        // RENDER
+        // RENDER WORLD
         // ======================================================
         Gdx.gl.glClearColor(0.92f, 0.92f, 0.92f, 1);
-
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
+        // tilemap render
         renderer.setView(camera);
         renderer.render();
 
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
 
-        // PLAYER
+
+        // ======================================================
+        // PLAYER RENDER
+        // ======================================================
         if (playerHitFlashTimer > 0 || burnTimer > 0) {
             batch.setColor(Color.RED);
         }
@@ -1009,104 +901,84 @@ public class MyRogueLikeGame extends ApplicationAdapter {
                 playerX,
                 playerY,
                 PLAYER_SIZE,
-                PLAYER_SIZE);
+                PLAYER_SIZE
+        );
 
         batch.setColor(Color.WHITE);
 
-        // ENEMIES
+
+        // ======================================================
+        // ENEMIES RENDER
+        // ======================================================
         for (Enemy e : enemies) {
 
-            Texture tex;
-
-            if (e.type == 2) {
-                tex = spikeSlime; // ✅ SPIKE SLIME IMAGE
-            } else {
-                tex = e.movingLeft ? slimeLeft : slimeRight;
-            }
+            Texture tex = (e.type == 2)
+                    ? spikeSlime
+                    : (e.movingLeft ? slimeLeft : slimeRight);
 
             if (e.hitFlashTimer > 0) {
                 batch.setColor(Color.RED);
             }
 
             batch.draw(tex, e.x, e.y, e.size, e.size);
-
             batch.setColor(Color.WHITE);
         }
 
-        // HOVER KUNAI
+
+        // ======================================================
+        // PROJECTILES + ITEMS RENDER
+        // ======================================================
+
+        // aim preview kunai
         batch.draw(
                 kunaiTexture,
-                kunaiHoverX,
-                kunaiHoverY,
-                13,
-                13,
-                26,
-                26,
-                1,
-                1,
+                kunaiHoverX, kunaiHoverY,
+                13, 13,
+                26, 26,
+                1, 1,
                 hoverRotation,
-                0,
-                0,
+                0, 0,
                 kunaiTexture.getWidth(),
                 kunaiTexture.getHeight(),
-                false,
-                false
+                false, false
         );
 
-        // SHOT KUNAIS
+        // active kunai
         for (Kunai k : kunais) {
-
             batch.draw(
                     kunaiTexture,
-                    k.x,
-                    k.y,
-                    13,
-                    13,
-                    26,
-                    26,
-                    1,
-                    1,
+                    k.x, k.y,
+                    13, 13,
+                    26, 26,
+                    1, 1,
                     k.rotation,
-                    0,
-                    0,
+                    0, 0,
                     kunaiTexture.getWidth(),
                     kunaiTexture.getHeight(),
-                    false,
-                    false
+                    false, false
             );
         }
 
-        // ENEMY PROJECTILES
+        // enemy projectiles
         for (EnemyProjectile p : enemyProjectiles) {
-
-            batch.draw(
-                    p.texture,
-                    p.x,
-                    p.y,
-                    p.size,
-                    p.size
-            );
+            batch.draw(p.texture, p.x, p.y, p.size, p.size);
         }
 
+        // xp orbs
         for (XpOrb orb : xpOrbs) {
-
             batch.draw(
-                orb.big ? bigXpTexture : xpTexture,
-                orb.x,
-                orb.y,
-                orb.size,
-                orb.size
+                    orb.big ? bigXpTexture : xpTexture,
+                    orb.x, orb.y,
+                    orb.size, orb.size
             );
         }
 
+        // potions
         for (Potion p : potions) {
-
             batch.draw(
                     p.health ? healthPotion : buffPotion,
-                    p.x,
-                    p.y,
-                    p.size,
-                    p.size
+                    p.x, p.y,
+                    p.size, p.size
             );
         }
 
@@ -1119,7 +991,7 @@ public class MyRogueLikeGame extends ApplicationAdapter {
         batch.begin();
 
         // ======================================================
-        // STAT MENU BACKGROUND (KEEP THIS)
+        // STAT MENU BACKGROUND
         // ======================================================
         batch.draw(statMenu, 10, 10, 220, 270);
 
@@ -1127,11 +999,11 @@ public class MyRogueLikeGame extends ApplicationAdapter {
         // POTION UI (BUFF + HEALTH)
         // ======================================================
 
-        // anchor near stat menu (to the right of it)
+        // anchor near stat menu (to the right)
         float potionBaseX = 250;
         float potionBaseY = 30;
 
-        // Buff potion
+        // buff potion
         if (hasBuffPotion) {
             batch.setColor(1f, 1f, 1f, 1f);
         } else {
@@ -1139,7 +1011,7 @@ public class MyRogueLikeGame extends ApplicationAdapter {
         }
         batch.draw(buffPotion, potionBaseX - 120, potionBaseY - 10, 64, 64);
 
-        // Health potion
+        // health potion
         if (hasHealthPotion) {
             batch.setColor(1f, 1f, 1f, 1f);
         } else {
@@ -1150,8 +1022,6 @@ public class MyRogueLikeGame extends ApplicationAdapter {
         // reset color
         batch.setColor(Color.WHITE);
 
-        // reset color (important)
-
         // ======================================================
         // UI BASE POSITION (anchored to stat menu)
         // ======================================================
@@ -1161,62 +1031,58 @@ public class MyRogueLikeGame extends ApplicationAdapter {
         // LEVEL BAR
         batch.draw(levelIcon, baseX + 230, baseY + 100, 180, 40);
 
-        // LEVEL NUMBER (draw AFTER so it appears in front)
-        drawNumberForward(level,(int)(baseX + 345), (int)(baseY + 112), 0.6f);
+        // LEVEL NUMBER (draw after so it appears in front)
+        drawNumberForward(level, (int)(baseX + 345), (int)(baseY + 112), 0.6f);
 
         // ======================================================
-        // HP BAR (inside stat menu)
+        // HP BAR
         // ======================================================
         batch.draw(hpBar, baseX + 230, baseY + 50, 180, 40);
 
-        // HP number on bar (SMALLER)
-        // ======================================================
+        // HP number
         drawNumberForward(currentHealth,
                 (int)(baseX + 320),
                 (int)(baseY + 62),
                 0.6f);
 
         // ======================================================
-        // XP BAR (inside stat menu, below HP)
+        // XP BAR
         // ======================================================
         batch.draw(xpBar, baseX + 230, baseY, 180, 40);
 
-        // XP text: xp / xpToNextLevel (SMALLER)
-        // ======================================================
+        // XP current
         drawNumberForward(xp,
                 (int)(baseX + 300),
                 (int)(baseY + 10),
                 0.6f);
 
-        // slash in middle
+        // slash
         batch.draw(slash, baseX + 330, baseY + 8, 24, 24);
 
-        // max XP (SMALLER)
-        // ======================================================
+        // XP max
         drawNumberForward(xpToNextLevel,
                 (int)(baseX + 360),
                 (int)(baseY + 10),
                 0.6f);
 
-        // ======================================================
-        // OPTIONAL: small enemy count or time (keep if you want)
-        // ======================================================
+        // optional debug
         drawNumberForward(enemies.size(), 1180, 680, 0.6f);
 
         batch.end();
     }
+
     // ======================================================
     // SHAKE
     // ======================================================
     private void triggerShake() {
-
         shakeTime = 0.12f;
-
         shakeIntensity = 4f;
     }
 
+    // ======================================================
+    // NUMBER RENDERING
+    // ======================================================
     private void drawNumberForward(int value, int x, int y) {
-
         drawNumberForward(value, x, y, 1f);
     }
 
@@ -1246,9 +1112,7 @@ public class MyRogueLikeGame extends ApplicationAdapter {
     // ======================================================
     private void spawnWave() {
 
-        // ============================
-        // BOSS WAVE (ROUND 100)
-        // ============================
+        // boss wave
         if (wave == 100) {
 
             Enemy boss = new Enemy();
@@ -1262,56 +1126,61 @@ public class MyRogueLikeGame extends ApplicationAdapter {
             boss.shooter = true;
             boss.shootTimer = 0f;
 
-            // optional marker (if you want future logic)
             boss.type = 99;
 
             enemies.add(boss);
             return;
         }
 
-        // ============================
-        // NORMAL WAVES
-        // ============================
+        // normal waves
         int count = wave;
 
         for (int i = 0; i < count; i++) {
 
             Enemy e = new Enemy();
 
-            e.x = playableMinX + random.nextFloat() * (playableMaxX - playableMinX - 96f);
-            e.y = playableMinY + random.nextFloat() * (playableMaxY - playableMinY - 96f);
+            e.x = playableMinX + random.nextFloat() *
+                    (playableMaxX - playableMinX - 96f);
+
+            e.y = playableMinY + random.nextFloat() *
+                    (playableMaxY - playableMinY - 96f);
 
             int typeRoll = random.nextInt(3);
 
             if (typeRoll == 0) {
+
                 e.shooter = false;
                 e.size = 96f;
                 e.hp = 9;
 
             } else if (typeRoll == 1) {
+
                 e.shooter = true;
                 e.size = 48f;
                 e.hp = 2;
                 e.shootTimer = random.nextFloat() * SHOOTER_FIRE_INTERVAL;
 
             } else {
+
                 e.shooter = false;
                 e.size = 96f;
                 e.hp = 1;
                 e.speed = SPIKE_SLIME_SPEED;
-                e.type = 2; // 🔥 THIS IS THE KEY FIX
+                e.type = 2;
             }
 
             enemies.add(e);
         }
     }
 
+   // ======================================================
+    // CLEANUP
+    // ======================================================
     @Override
     public void dispose() {
 
         batch.dispose();
         bigXpTexture.dispose();
-
         shapeRenderer.dispose();
 
         ninjaDown.dispose();
